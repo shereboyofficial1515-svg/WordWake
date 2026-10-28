@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="alarmBackground" format="color" />
+    <attr name="alarmText" format="color" />
+    <attr name="alarmTextDim" format="color" />
+    <attr name="alarmCard" format="color" />
+    <attr name="alarmAccent" format="color" />
+</resources>

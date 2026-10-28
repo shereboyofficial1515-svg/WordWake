@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Built-in tones are referenced by android.resource:// URI (SoundCatalog), not by R.raw. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@raw/sunrise_chime,@raw/classic_beep,@raw/soft_bells,@raw/rising_pulse" />

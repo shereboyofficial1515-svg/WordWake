@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.WordWake" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/brand_primary</item>
+        <item name="colorOnPrimary">@color/brand_on_primary</item>
+        <item name="colorPrimaryContainer">@color/brand_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/brand_on_primary_container</item>
+        <item name="colorSecondary">@color/brand_secondary</item>
+        <item name="colorOnSecondary">@color/brand_on_secondary</item>
+        <item name="colorSecondaryContainer">@color/brand_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/brand_on_secondary_container</item>
+        <item name="colorTertiary">@color/brand_secondary</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/on_surface</item>
+        <item name="colorSurfaceVariant">@color/surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/on_surface_variant</item>
+        <item name="colorOutline">@color/outline</item>
+        <item name="android:colorBackground">@color/surface</item>
+        <item name="android:windowBackground">@color/surface</item>
+        <item name="colorError">@color/error_text</item>
+    </style>
+
+    <style name="Theme.WordWake.Alarm" parent="Theme.WordWake">
+        <item name="android:windowBackground">@color/alarm_bg</item>
+        <item name="android:statusBarColor">@color/alarm_bg</item>
+        <item name="android:navigationBarColor">@color/alarm_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="alarmBackground">@color/alarm_bg</item>
+        <item name="alarmText">@color/alarm_text</item>
+        <item name="alarmTextDim">@color/alarm_text_dim</item>
+        <item name="alarmCard">@color/alarm_card</item>
+        <item name="alarmAccent">@color/alarm_accent</item>
+    </style>
+
+    <style name="Theme.WordWake.Alarm.HighContrast">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:statusBarColor">@android:color/black</item>
+        <item name="android:navigationBarColor">@android:color/black</item>
+        <item name="alarmBackground">@android:color/black</item>
+        <item name="alarmText">@android:color/white</item>
+        <item name="alarmTextDim">#FFFFEB3B</item>
+        <item name="alarmCard">@android:color/black</item>
+        <item name="alarmAccent">#FFFFEB3B</item>
+    </style>
+
+    <style name="SectionTitle" parent="TextAppearance.Material3.TitleSmall">
+        <item name="android:textColor">?attr/colorPrimary</item>
+    </style>
+</resources>

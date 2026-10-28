@@ -1,0 +1,474 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:navigationContentDescription="@string/discard"
+            app:navigationIcon="?attr/homeAsUpIndicator" />
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scroll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- ===== Message ===== -->
+            <TextView
+                style="@style/SectionTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/section_message"
+                android:textAppearance="@style/SectionTitle" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/hint_title">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/title_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textCapSentences"
+                    android:maxLength="120" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/body_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/hint_body">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/body_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="top|start"
+                    android:inputType="textMultiLine|textCapSentences"
+                    android:minLines="6"
+                    android:scrollbars="vertical" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- ===== When ===== -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/section_when"
+                android:textAppearance="@style/SectionTitle" />
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/repeat_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:selectionRequired="true"
+                app:singleSelection="true">
+
+                <Button
+                    android:id="@+id/repeat_once"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/repeat_once" />
+
+                <Button
+                    android:id="@+id/repeat_daily"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/repeat_daily_short" />
+
+                <Button
+                    android:id="@+id/repeat_days"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/repeat_days_short" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <LinearLayout
+                android:id="@+id/date_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/label_date"
+                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/date_button"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/days_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_days"
+                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/days_group"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp">
+
+                    <com.google.android.material.chip.Chip android:id="@+id/day_mon" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <com.google.android.material.chip.Chip android:id="@+id/day_tue" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <com.google.android.material.chip.Chip android:id="@+id/day_wed" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <com.google.android.material.chip.Chip android:id="@+id/day_thu" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <com.google.android.material.chip.Chip android:id="@+id/day_fri" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <com.google.android.material.chip.Chip android:id="@+id/day_sat" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <com.google.android.material.chip.Chip android:id="@+id/day_sun" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                </com.google.android.material.chip.ChipGroup>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/days_weekdays"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/days_weekdays" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/days_weekend"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/days_weekend" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/days_all"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/days_all" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/label_start"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/start_button"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="64dp"
+                        android:textSize="20sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/label_end"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/end_button"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="64dp"
+                        android:textSize="16sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="4dp"
+                    android:text="@string/label_quick_length"
+                    android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
+
+                <com.google.android.material.button.MaterialButton android:id="@+id/quick_15" style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="0dp" android:text="15m" />
+                <com.google.android.material.button.MaterialButton android:id="@+id/quick_30" style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="0dp" android:text="30m" />
+                <com.google.android.material.button.MaterialButton android:id="@+id/quick_60" style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="0dp" android:text="1h" />
+                <com.google.android.material.button.MaterialButton android:id="@+id/quick_120" style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="0dp" android:text="2h" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/window_summary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/bg_chip_ok"
+                android:backgroundTint="?attr/colorSurfaceVariant"
+                android:lineSpacingExtra="2dp"
+                android:padding="12dp"
+                android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/label_style"
+                android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/style_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                app:selectionRequired="true"
+                app:singleSelection="true">
+
+                <Button
+                    android:id="@+id/style_continuous"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/style_continuous_short" />
+
+                <Button
+                    android:id="@+id/style_reminders"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/style_reminders_short" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <LinearLayout
+                android:id="@+id/reminder_row"
+                style="@style/EditRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView style="@style/EditRowLabel" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/reminder_every" />
+                <TextView android:id="@+id/reminder_value" style="@style/EditRowValue" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <!-- ===== Sound ===== -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/section_sound"
+                android:textAppearance="@style/SectionTitle" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="12dp"
+                    android:text="@string/label_sound"
+                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/sound_button"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    app:icon="@drawable/ic_music" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/sound_warning"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_chip_warn"
+                android:orientation="vertical"
+                android:padding="12dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/sound_warning_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                    android:textColor="@color/warn_text" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/label_volume"
+                android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+
+            <com.google.android.material.slider.Slider
+                android:id="@+id/volume_slider"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:stepSize="10"
+                android:valueFrom="10"
+                android:valueTo="100" />
+
+            <LinearLayout
+                android:id="@+id/volume_warning"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_chip_warn"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/volume_low_warning"
+                    android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                    android:textColor="@color/warn_text" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/volume_settings"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/open_sound_settings" />
+            </LinearLayout>
+
+            <LinearLayout style="@style/EditRow" android:layout_width="match_parent" android:layout_height="wrap_content">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                    <TextView style="@style/EditRowLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_loop" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_loop_summary" android:textAppearance="@style/TextAppearance.Material3.BodySmall" android:textColor="@color/text_secondary" />
+                </LinearLayout>
+                <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/loop_switch" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <LinearLayout android:id="@+id/sound_duration_row" style="@style/EditRow" android:layout_width="match_parent" android:layout_height="wrap_content">
+                <TextView style="@style/EditRowLabel" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/label_sound_duration" />
+                <TextView android:id="@+id/sound_duration_value" style="@style/EditRowValue" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <LinearLayout style="@style/EditRow" android:layout_width="match_parent" android:layout_height="wrap_content">
+                <TextView style="@style/EditRowLabel" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/label_vibrate" />
+                <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/vibrate_switch" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <!-- ===== Options ===== -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/section_options"
+                android:textAppearance="@style/SectionTitle" />
+
+            <LinearLayout android:id="@+id/snooze_row" style="@style/EditRow" android:layout_width="match_parent" android:layout_height="wrap_content">
+                <TextView style="@style/EditRowLabel" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/label_snooze" />
+                <TextView android:id="@+id/snooze_value" style="@style/EditRowValue" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <LinearLayout style="@style/EditRow" android:layout_width="match_parent" android:layout_height="wrap_content">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                    <TextView style="@style/EditRowLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_auto_dismiss" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_auto_dismiss_summary" android:textAppearance="@style/TextAppearance.Material3.BodySmall" android:textColor="@color/text_secondary" />
+                </LinearLayout>
+                <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/auto_dismiss_switch" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <LinearLayout android:id="@+id/zone_row" style="@style/EditRow" android:layout_width="match_parent" android:layout_height="wrap_content">
+                <TextView style="@style/EditRowLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="12dp" android:text="@string/label_zone" />
+                <TextView android:id="@+id/zone_value" style="@style/EditRowValue" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="end" />
+            </LinearLayout>
+
+            <LinearLayout style="@style/EditRow" android:layout_width="match_parent" android:layout_height="wrap_content">
+                <TextView style="@style/EditRowLabel" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/label_enabled" />
+                <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/enabled_switch" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/errors_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_chip_warn"
+                android:lineSpacingExtra="2dp"
+                android:padding="12dp"
+                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                android:textColor="@color/error_text"
+                android:visibility="gone" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/save_button"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="24dp"
+                android:text="@string/save_schedule"
+                android:textSize="17sp" />
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
