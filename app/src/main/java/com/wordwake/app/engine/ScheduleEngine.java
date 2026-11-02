@@ -9,6 +9,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeSet;
 
 /**
  * Pure scheduling logic (no Android dependencies) so it can be unit-tested on the JVM.
@@ -26,6 +27,8 @@ public final class ScheduleEngine {
     public static final long LATE_TOLERANCE_MS = 60_000L;
     /** An event is considered due when it is at most this far in the future. */
     public static final long DUE_TOLERANCE_MS = 5_000L;
+    /** How far ahead date scanning looks for monthly and yearly repeats. */
+    private static final int SCAN_DAYS = 400;
 
     public static final int KIND_START = 1;
     public static final int KIND_REMINDER = 2;
@@ -42,6 +45,9 @@ public final class ScheduleEngine {
     public static final int ERR_INTERVAL_TOO_LONG = 6;
     public static final int ERR_MESSAGE_TOO_LONG = 7;
     public static final int ERR_BAD_TIME = 8;
+    public static final int ERR_NO_DATES = 9;
+    public static final int ERR_NO_DEADLINE = 10;
+    public static final int ERR_NO_LEADS = 11;
 
     private ScheduleEngine() {}
 
@@ -57,12 +63,15 @@ public final class ScheduleEngine {
 
     public static final class Event {
         public final long at;
+        /** When this event should have happened; earlier than {@link #at} if it is late. */
+        public final long scheduledFor;
         public final long occStart;
         public final long occEnd;
         public final int kind;
 
-        Event(long at, long occStart, long occEnd, int kind) {
+        Event(long at, long scheduledFor, long occStart, long occEnd, int kind) {
             this.at = at;
+            this.scheduledFor = scheduledFor;
             this.occStart = occStart;
             this.occEnd = occEnd;
             this.kind = kind;
@@ -106,7 +115,8 @@ public final class ScheduleEngine {
         List<Integer> errors = new ArrayList<>();
         String title = s.title == null ? "" : s.title.trim();
         String body = s.body == null ? "" : s.body.trim();
-        if (title.isEmpty() && body.isEmpty()) errors.add(ERR_EMPTY_MESSAGE);
+        String quote = s.quote == null ? "" : s.quote.trim();
+        if (title.isEmpty() && body.isEmpty() && quote.isEmpty() && !s.quoteRandom) errors.add(ERR_EMPTY_MESSAGE);
         if (s.body != null && s.body.length() > MAX_BODY_CHARS) errors.add(ERR_MESSAGE_TOO_LONG);
         if (s.startMinute < 0 || s.startMinute >= 1440 || s.endMinute < 0 || s.endMinute >= 1440) {
             errors.add(ERR_BAD_TIME);
@@ -128,7 +138,57 @@ public final class ScheduleEngine {
             Window w = windowFor(s.onceDate(), s.startMinute, s.endMinute, s.zone(deviceZone));
             if (w.start <= nowMs) errors.add(ERR_IN_PAST);
         }
+        if (s.repeatMode == Schedule.REPEAT_CUSTOM_DATES && s.customDateList().isEmpty()) {
+            errors.add(ERR_NO_DATES);
+        }
+        if (s.repeatMode == Schedule.REPEAT_DEADLINE) {
+            if (s.deadlineAt <= 0) {
+                errors.add(ERR_NO_DEADLINE);
+            } else if (s.leadDayList().isEmpty() && !s.followUpDaily && !s.overdueDaily) {
+                errors.add(ERR_NO_LEADS);
+            }
+        }
         return errors;
+    }
+
+    /** True when an occurrence of this schedule starts on {@code date}. */
+    public static boolean occursOn(Schedule s, LocalDate date, ZoneId zone) {
+        LocalDate anchor = LocalDate.ofEpochDay(s.startDate);
+        switch (s.repeatMode) {
+            case Schedule.REPEAT_ONCE:
+                return date.equals(anchor);
+            case Schedule.REPEAT_DAILY:
+            case Schedule.REPEAT_DAYS:
+                return s.runsOn(date.getDayOfWeek());
+            case Schedule.REPEAT_WEEKLY:
+                return !date.isBefore(anchor) && date.getDayOfWeek() == anchor.getDayOfWeek();
+            case Schedule.REPEAT_MONTHLY:
+                // A monthly alert on the 31st falls on the last day of shorter months.
+                return !date.isBefore(anchor)
+                        && date.getDayOfMonth() == Math.min(anchor.getDayOfMonth(), date.lengthOfMonth());
+            case Schedule.REPEAT_YEARLY:
+                return !date.isBefore(anchor) && date.getMonth() == anchor.getMonth()
+                        && date.getDayOfMonth() == Math.min(anchor.getDayOfMonth(), date.lengthOfMonth());
+            case Schedule.REPEAT_CUSTOM_DATES:
+                return s.customDateList().contains(date);
+            case Schedule.REPEAT_DEADLINE:
+                return deadlineAlertOn(s, date, zone);
+            default:
+                return false;
+        }
+    }
+
+    private static boolean deadlineAlertOn(Schedule s, LocalDate date, ZoneId zone) {
+        if (s.deadlineAt <= 0) return false;
+        LocalDate deadline = Instant.ofEpochMilli(s.deadlineAt).atZone(zone).toLocalDate();
+        LocalDate first = LocalDate.ofEpochDay(s.startDate);
+        if (date.isAfter(deadline)) return s.overdueDaily;
+        if (s.followUpDaily && !date.isBefore(first)) return true;
+        if (date.isBefore(first)) return false;
+        for (int lead : s.leadDayList()) {
+            if (date.equals(deadline.minusDays(lead))) return true;
+        }
+        return false;
     }
 
     /** Dates whose occurrence could still be relevant at {@code nowMs}, in chronological order. */
@@ -140,27 +200,82 @@ public final class ScheduleEngine {
         }
         LocalDate today = Instant.ofEpochMilli(nowMs).atZone(zone).toLocalDate();
         // Start one day back: a window that began yesterday can still be running (overnight).
-        for (int i = -1; i <= 8; i++) {
-            LocalDate d = today.plusDays(i);
-            if (s.runsOn(d.getDayOfWeek())) dates.add(d);
+        LocalDate from = today.minusDays(1);
+        if (s.repeatMode == Schedule.REPEAT_CUSTOM_DATES) {
+            for (LocalDate d : s.customDateList()) if (!d.isBefore(from)) dates.add(d);
+            return dates;
+        }
+        if (s.repeatMode == Schedule.REPEAT_DEADLINE) {
+            dates.addAll(deadlineDates(s, from, from.plusDays(SCAN_DAYS * 3L), zone));
+            return dates;
+        }
+        LocalDate anchor = LocalDate.ofEpochDay(s.startDate);
+        boolean anchored = s.repeatMode != Schedule.REPEAT_DAILY && s.repeatMode != Schedule.REPEAT_DAYS;
+        if (anchored && anchor.isAfter(from)) from = anchor;
+        for (int i = 0; i <= SCAN_DAYS; i++) {
+            LocalDate d = from.plusDays(i);
+            if (occursOn(s, d, zone)) {
+                dates.add(d);
+                // Enough to skip a dismissed occurrence and an overnight window from yesterday.
+                if (dates.size() >= 3) break;
+            }
         }
         return dates;
     }
 
-    /**
-     * Returns the next alarm event for this schedule at or after {@code nowMs}, or null if nothing
-     * remains (disabled, one-time alert completed, invalid window).
-     */
+    private static TreeSet<LocalDate> deadlineDates(Schedule s, LocalDate from, LocalDate to, ZoneId zone) {
+        TreeSet<LocalDate> out = new TreeSet<>();
+        if (s.deadlineAt <= 0) return out;
+        LocalDate deadline = Instant.ofEpochMilli(s.deadlineAt).atZone(zone).toLocalDate();
+        LocalDate first = LocalDate.ofEpochDay(s.startDate);
+        for (int lead : s.leadDayList()) {
+            LocalDate d = deadline.minusDays(lead);
+            if (!d.isBefore(first) && !d.isBefore(from) && !d.isAfter(to)) out.add(d);
+        }
+        if (s.followUpDaily) {
+            LocalDate d = first.isAfter(from) ? first : from;
+            for (; !d.isAfter(deadline) && !d.isAfter(to); d = d.plusDays(1)) out.add(d);
+        }
+        if (s.overdueDaily) {
+            LocalDate d = deadline.plusDays(1).isAfter(from) ? deadline.plusDays(1) : from;
+            for (int i = 0; i < 3 && !d.isAfter(to); i++, d = d.plusDays(1)) out.add(d);
+        }
+        return out;
+    }
+
+    /** Every date in [from, to] with an occurrence; used by the calendar. */
+    public static List<LocalDate> datesInRange(Schedule s, LocalDate from, LocalDate to, ZoneId deviceZone) {
+        ZoneId zone = s.zone(deviceZone);
+        List<LocalDate> out = new ArrayList<>();
+        if (s.repeatMode == Schedule.REPEAT_DEADLINE) {
+            out.addAll(deadlineDates(s, from, to, zone));
+            if (s.overdueDaily) {
+                for (LocalDate d = from; !d.isAfter(to); d = d.plusDays(1)) {
+                    if (occursOn(s, d, zone) && !out.contains(d)) out.add(d);
+                }
+            }
+            java.util.Collections.sort(out);
+            return out;
+        }
+        for (LocalDate d = from; !d.isAfter(to); d = d.plusDays(1)) {
+            if (occursOn(s, d, zone)) out.add(d);
+        }
+        return out;
+    }
+
     public static Event nextEvent(Schedule s, long nowMs, ZoneId deviceZone) {
         return nextEvent(s, nowMs, deviceZone, false);
     }
 
     /**
+     * Returns the next alarm event for this schedule at or after {@code nowMs}, or null if nothing
+     * remains (disabled, completed, finished, invalid window).
+     *
      * @param ringingInProcess true when a ring session for this schedule is currently playing in
      *                         this process; suppresses the RESUME event.
      */
     public static Event nextEvent(Schedule s, long nowMs, ZoneId deviceZone, boolean ringingInProcess) {
-        if (!s.enabled) return null;
+        if (!s.enabled || s.isCompleted()) return null;
         if (windowMinutes(s.startMinute, s.endMinute) == 0) return null;
         if (s.repeatMode == Schedule.REPEAT_DAYS && (s.daysMask & Schedule.ALL_DAYS) == 0) return null;
         ZoneId zone = s.zone(deviceZone);
@@ -175,11 +290,11 @@ public final class ScheduleEngine {
     static Event eventIn(Schedule s, Window w, long now, boolean ringingInProcess) {
         if (w.end <= now) return null;
         if (s.dismissedOcc == w.start) return null;
-        if (now < w.start) return new Event(w.start, w.start, w.end, KIND_START);
+        if (now < w.start) return new Event(w.start, w.start, w.start, w.end, KIND_START);
 
         boolean same = s.occStart == w.start;
         if (same && !ringingInProcess && s.ringActiveUntil > now) {
-            return new Event(now, w.start, w.end, KIND_RESUME);
+            return new Event(now, now, w.start, w.end, KIND_RESUME);
         }
         long last = same ? s.lastRingAt : 0;
         long snooze = (same && s.snoozeUntil > 0 && s.snoozeUntil < w.end) ? s.snoozeUntil : 0;
@@ -202,7 +317,7 @@ public final class ScheduleEngine {
         }
         if (candidate == Long.MAX_VALUE) return null;
         if (kind == KIND_START && now - candidate > LATE_TOLERANCE_MS) kind = KIND_LATE_START;
-        return new Event(Math.max(candidate, now), w.start, w.end, kind);
+        return new Event(Math.max(candidate, now), candidate, w.start, w.end, kind);
     }
 
     /** First reminder slot strictly after {@code t} on the grid start + k * interval. */
@@ -237,21 +352,41 @@ public final class ScheduleEngine {
         return s.snoozeMinutes > 0 && nowMs + s.snoozeMinutes * 60_000L < occEnd;
     }
 
-    /** The window of the occurrence that started at {@code occStart}. */
+    /**
+     * The window of the occurrence that started at {@code occStart}. Keeps the nominal length if
+     * the schedule was edited or the zone changed after that occurrence began.
+     */
     public static Window windowOf(Schedule s, long occStart, ZoneId deviceZone) {
         ZoneId zone = s.zone(deviceZone);
         LocalDate d = Instant.ofEpochMilli(occStart).atZone(zone).toLocalDate();
         Window w = windowFor(d, s.startMinute, s.endMinute, zone);
         if (w.start != occStart) {
-            // Schedule was edited or the zone changed; keep the nominal length from occStart.
             int minutes = Math.max(1, windowMinutes(s.startMinute, s.endMinute));
             return new Window(occStart, occStart + minutes * 60_000L);
         }
         return w;
     }
 
-    /** True when a one-time schedule has nothing left to do. */
+    /** True when a finite schedule has nothing left to do. */
     public static boolean isFinished(Schedule s, long nowMs, ZoneId deviceZone) {
-        return s.repeatMode == Schedule.REPEAT_ONCE && nextEvent(s, nowMs, deviceZone) == null;
+        return s.isFiniteRepeat() && nextEvent(s, nowMs, deviceZone) == null;
+    }
+
+    /**
+     * True when the alert stored in {@code nextTriggerAt} passed without ringing and its window has
+     * closed, e.g. the phone was off or a manufacturer power manager held the alarm back.
+     *
+     * @param next the event computed now for this schedule (may be null).
+     */
+    public static boolean wasMissed(Schedule s, Event next, long nowMs) {
+        long expected = s.nextTriggerAt;
+        if (expected <= 0 || expected + LATE_TOLERANCE_MS >= nowMs) return false;
+        if (s.lastRingAt >= expected) return false;
+        return next == null || next.occStart > expected;
+    }
+
+    /** True when the deadline has passed and the work is not completed. */
+    public static boolean isOverdue(Schedule s, long nowMs) {
+        return s.deadlineAt > 0 && !s.isCompleted() && nowMs > s.deadlineAt;
     }
 }

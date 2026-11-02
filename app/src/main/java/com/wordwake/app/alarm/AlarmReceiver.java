@@ -11,13 +11,14 @@ public class AlarmReceiver extends BroadcastReceiver {
 
     public static final String ACTION_FIRE = "com.wordwake.app.action.FIRE";
     public static final String ACTION_END = "com.wordwake.app.action.END";
+    public static final String ACTION_TEST = "com.wordwake.app.action.TEST";
     public static final String EXTRA_SCHEDULE_ID = "schedule_id";
 
     @Override
     public void onReceive(Context context, Intent intent) {
         final String action = intent.getAction();
         final long id = intent.getLongExtra(EXTRA_SCHEDULE_ID, 0);
-        if (id == 0 || action == null) return;
+        if (action == null || (id == 0 && !ACTION_TEST.equals(action))) return;
         final Context app = context.getApplicationContext();
         final PendingResult result = goAsync();
         AppExecutors.io(() -> {
@@ -26,6 +27,8 @@ public class AlarmReceiver extends BroadcastReceiver {
                     AlarmController.onFire(app, id);
                 } else if (ACTION_END.equals(action)) {
                     AlarmController.endSession(app, id);
+                } else if (ACTION_TEST.equals(action)) {
+                    SystemTest.onFired(app);
                 }
             } finally {
                 result.finish();

@@ -1,6 +1,8 @@
 package com.wordwake.app.ui;
 
+import android.app.KeyguardManager;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -8,6 +10,9 @@ import android.os.Looper;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.CheckBox;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -18,15 +23,20 @@ import com.wordwake.app.alarm.ActiveAlarm;
 import com.wordwake.app.alarm.AlarmController;
 import com.wordwake.app.data.AppExecutors;
 import com.wordwake.app.data.AppSettings;
-import com.wordwake.app.data.ScheduleRepository;
+import com.wordwake.app.data.AttachmentStore;
+import com.wordwake.app.data.ContentRepository;
 import com.wordwake.app.engine.ScheduleEngine;
+import com.wordwake.app.model.Category;
+import com.wordwake.app.model.ChecklistItem;
 import com.wordwake.app.model.Schedule;
 import com.wordwake.app.sound.AlarmPlayer;
 
+import java.util.List;
+
 /**
- * Full-screen alarm display. Shown over the lock screen and turns the screen on where Android
- * permits; it never dismisses or bypasses the keyguard (the user still unlocks normally to use
- * the phone).
+ * Full-screen alert: what is due, why and how, with the checklist and picture. Shown over the lock
+ * screen and turns the screen on where Android permits. It never bypasses the keyguard; opening
+ * details asks Android for the normal unlock.
  */
 public class AlarmActivity extends AppCompatActivity implements ActiveAlarm.Listener {
 
@@ -40,9 +50,19 @@ public class AlarmActivity extends AppCompatActivity implements ActiveAlarm.List
     private Schedule schedule;
     private AppSettings settings;
 
-    private TextView titleView, bodyView, scheduledView, remainingView, warningView, endedView;
-    private MaterialButton stopButton, snoozeButton, dismissButton;
+    private TextView categoryView, titleView, bodyView, quoteView, scheduledView, remainingView, deadlineView, warningView, endedView, checklistTitle;
+    private ImageView imageView;
+    private LinearLayout checklistBox;
+    private MaterialButton stopButton, snoozeButton, dismissButton, completeButton, detailsButton;
     private final Handler handler = new Handler(Looper.getMainLooper());
+
+    private static final class Content {
+        Schedule schedule;
+        String quote;
+        Bitmap image;
+        Category category;
+        List<ChecklistItem> checklist;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,24 +72,35 @@ public class AlarmActivity extends AppCompatActivity implements ActiveAlarm.List
         showOverLockScreen();
         setContentView(R.layout.activity_alarm);
 
+        categoryView = findViewById(R.id.alarm_category);
         titleView = findViewById(R.id.alarm_title);
         bodyView = findViewById(R.id.alarm_body);
+        quoteView = findViewById(R.id.alarm_quote);
+        imageView = findViewById(R.id.alarm_image);
         scheduledView = findViewById(R.id.alarm_scheduled);
         remainingView = findViewById(R.id.alarm_remaining);
+        deadlineView = findViewById(R.id.alarm_deadline);
         warningView = findViewById(R.id.alarm_warning);
         endedView = findViewById(R.id.alarm_ended);
+        checklistTitle = findViewById(R.id.alarm_checklist_title);
+        checklistBox = findViewById(R.id.alarm_checklist);
         stopButton = findViewById(R.id.button_stop);
         snoozeButton = findViewById(R.id.button_snooze);
         dismissButton = findViewById(R.id.button_dismiss);
+        completeButton = findViewById(R.id.button_complete);
+        detailsButton = findViewById(R.id.button_details);
 
         float scale = settings.alarmTextSize() == AppSettings.TEXT_HUGE ? 1.35f
                 : settings.alarmTextSize() == AppSettings.TEXT_NORMAL ? 0.85f : 1f;
         bodyView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 24 * scale);
         titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 30 * scale);
+        quoteView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 19 * scale);
 
         stopButton.setOnClickListener(v -> act(() -> AlarmController.silence(getApplicationContext(), scheduleId), false));
         snoozeButton.setOnClickListener(v -> act(() -> AlarmController.snooze(getApplicationContext(), scheduleId), true));
         dismissButton.setOnClickListener(v -> act(() -> AlarmController.dismiss(getApplicationContext(), scheduleId), true));
+        completeButton.setOnClickListener(v -> act(() -> AlarmController.complete(getApplicationContext(), scheduleId), true));
+        detailsButton.setOnClickListener(v -> openDetails());
 
         readIntent(getIntent());
     }
@@ -96,22 +127,72 @@ public class AlarmActivity extends AppCompatActivity implements ActiveAlarm.List
         occStart = intent.getLongExtra(EXTRA_OCC_START, 0);
         occEnd = intent.getLongExtra(EXTRA_OCC_END, 0);
         test = intent.getBooleanExtra(EXTRA_TEST, false);
-        AppExecutors.io(() -> new ScheduleRepository(getApplicationContext()).get(scheduleId), s -> {
-            if (isFinishing()) return;
-            if (s == null) {
-                finish();
-                return;
-            }
-            schedule = s;
-            if (occStart == 0) occStart = s.occStart;
-            if (occEnd == 0) occEnd = ScheduleEngine.windowOf(s, occStart, java.time.ZoneId.systemDefault()).end;
-            titleView.setText(s.displayTitle());
-            titleView.setVisibility(s.title == null || s.title.trim().isEmpty() ? View.GONE : View.VISIBLE);
-            bodyView.setText(s.body);
-            scheduledView.setText(getString(test ? R.string.alarm_test_label : R.string.alarm_scheduled,
-                    Formats.time(this, occStart), Formats.time(this, occEnd)));
-            updateState();
-        });
+        final android.content.Context app = getApplicationContext();
+        final long id = scheduleId;
+        AppExecutors.io(() -> {
+            Content c = new Content();
+            c.schedule = AlarmController.load(app, id);
+            if (c.schedule == null) return c;
+            ContentRepository content = new ContentRepository(app);
+            c.quote = c.schedule.quoteRandom ? content.randomQuote() : c.schedule.quote;
+            c.checklist = content.checklist(id);
+            c.category = Category.find(c.schedule.categoryKey, content.customCategories());
+            if (id > 0) c.image = AttachmentStore.firstImage(app, id, 1440);
+            return c;
+        }, this::bind);
+    }
+
+    private void bind(Content c) {
+        if (isFinishing()) return;
+        Schedule s = c.schedule;
+        if (s == null) {
+            finish();
+            return;
+        }
+        schedule = s;
+        if (occStart == 0) occStart = s.occStart;
+        if (occEnd == 0) occEnd = ScheduleEngine.windowOf(s, occStart, java.time.ZoneId.systemDefault()).end;
+        categoryView.setText(getString(R.string.item_category_format, Formats.typeName(this, s.type), c.category.name(this)));
+        titleView.setText(s.displayTitle());
+        titleView.setVisibility(s.title == null || s.title.trim().isEmpty() ? View.GONE : View.VISIBLE);
+        bodyView.setText(s.body);
+        bodyView.setVisibility(s.body == null || s.body.trim().isEmpty() ? View.GONE : View.VISIBLE);
+        boolean hasQuote = c.quote != null && !c.quote.trim().isEmpty();
+        quoteView.setVisibility(hasQuote ? View.VISIBLE : View.GONE);
+        if (hasQuote) quoteView.setText(getString(R.string.alarm_quote_format, c.quote.trim()));
+        if (c.image != null) {
+            imageView.setImageBitmap(c.image);
+            imageView.setVisibility(View.VISIBLE);
+        } else {
+            imageView.setVisibility(View.GONE);
+        }
+        scheduledView.setText(getString(test ? R.string.alarm_test_label : R.string.alarm_scheduled,
+                Formats.time(this, occStart), Formats.time(this, occEnd)));
+        bindChecklist(c.checklist);
+        boolean real = s.id > 0 && !test;
+        completeButton.setVisibility(real && s.isTracked() ? View.VISIBLE : View.GONE);
+        detailsButton.setVisibility(real ? View.VISIBLE : View.GONE);
+        updateState();
+    }
+
+    private void bindChecklist(List<ChecklistItem> items) {
+        checklistBox.removeAllViews();
+        boolean any = items != null && !items.isEmpty();
+        checklistTitle.setVisibility(any ? View.VISIBLE : View.GONE);
+        if (!any) return;
+        android.content.res.ColorStateList tint = android.content.res.ColorStateList.valueOf(bodyView.getCurrentTextColor());
+        final android.content.Context app = getApplicationContext();
+        for (ChecklistItem i : items) {
+            CheckBox box = new CheckBox(this);
+            box.setText(i.text);
+            box.setChecked(i.done);
+            box.setTextColor(bodyView.getCurrentTextColor());
+            box.setButtonTintList(tint);
+            box.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
+            box.setOnCheckedChangeListener((b, checked) ->
+                    AppExecutors.io(() -> new ContentRepository(app).setChecklistDone(i.id, checked)));
+            checklistBox.addView(box);
+        }
     }
 
     @Override
@@ -161,6 +242,12 @@ public class AlarmActivity extends AppCompatActivity implements ActiveAlarm.List
         } else {
             remainingView.setText(getString(R.string.alarm_remaining, Formats.remaining(occEnd - now)));
         }
+        if (schedule.deadlineAt > 0) {
+            deadlineView.setVisibility(View.VISIBLE);
+            deadlineView.setText(Formats.deadlineLine(this, schedule));
+        } else {
+            deadlineView.setVisibility(View.GONE);
+        }
 
         stopButton.setVisibility(ringing ? View.VISIBLE : View.GONE);
         boolean snoozable = !test && !over && ScheduleEngine.canSnooze(schedule, now, occEnd);
@@ -202,5 +289,21 @@ public class AlarmActivity extends AppCompatActivity implements ActiveAlarm.List
             if (closeAfter) finish();
             else updateState();
         });
+    }
+
+    /** Asks Android for the normal unlock, then opens the details. */
+    private void openDetails() {
+        Intent details = new Intent(this, ReminderDetailActivity.class).putExtra(ReminderDetailActivity.EXTRA_ID, scheduleId);
+        KeyguardManager km = getSystemService(KeyguardManager.class);
+        if (km != null && km.isKeyguardLocked() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            km.requestDismissKeyguard(this, new KeyguardManager.KeyguardDismissCallback() {
+                @Override
+                public void onDismissSucceeded() {
+                    startActivity(details);
+                }
+            });
+        } else {
+            startActivity(details);
+        }
     }
 }

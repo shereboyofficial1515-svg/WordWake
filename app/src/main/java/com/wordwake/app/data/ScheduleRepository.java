@@ -75,18 +75,43 @@ public final class ScheduleRepository {
         ContentValues v = new ContentValues();
         putState(v, s);
         v.put("enabled", s.enabled ? 1 : 0);
+        v.put("status", s.status);
+        v.put("completed_at", s.completedAt);
         return db.getWritableDatabase().update(WordWakeDatabase.T_SCHEDULES, v, "id=?",
                 new String[]{String.valueOf(s.id)}) > 0;
     }
 
     public void delete(long id) {
-        db.getWritableDatabase().delete(WordWakeDatabase.T_SCHEDULES, "id=?", new String[]{String.valueOf(id)});
+        String[] arg = {String.valueOf(id)};
+        SQLiteDatabase w = db.getWritableDatabase();
+        w.beginTransaction();
+        try {
+            w.delete(WordWakeDatabase.T_SCHEDULES, "id=?", arg);
+            w.delete(WordWakeDatabase.T_CHECKLIST, "schedule_id=?", arg);
+            w.delete(WordWakeDatabase.T_ATTACHMENTS, "schedule_id=?", arg);
+            w.setTransactionSuccessful();
+        } finally {
+            w.endTransaction();
+        }
     }
 
     private static ContentValues toValues(Schedule s) {
         ContentValues v = new ContentValues();
         v.put("title", s.title == null ? "" : s.title);
         v.put("body", s.body == null ? "" : s.body);
+        v.put("type", s.type);
+        v.put("alert_mode", s.alertMode);
+        v.put("category_key", s.categoryKey == null ? "" : s.categoryKey);
+        v.put("custom_dates", s.customDates == null ? "" : s.customDates);
+        v.put("quote", s.quote == null ? "" : s.quote);
+        v.put("quote_random", s.quoteRandom ? 1 : 0);
+        v.put("deadline_at", s.deadlineAt);
+        v.put("lead_days", s.leadDays == null ? "" : s.leadDays);
+        v.put("follow_up_daily", s.followUpDaily ? 1 : 0);
+        v.put("overdue_daily", s.overdueDaily ? 1 : 0);
+        v.put("status", s.status);
+        v.put("completed_at", s.completedAt);
+        v.put("finance_json", s.financeJson == null ? "" : s.financeJson);
         v.put("repeat_mode", s.repeatMode);
         v.put("start_date", s.startDate);
         v.put("start_minute", s.startMinute);
@@ -126,7 +151,20 @@ public final class ScheduleRepository {
             s.id = c.getLong(c.getColumnIndexOrThrow("id"));
             s.title = str(c, "title");
             s.body = str(c, "body");
-            s.repeatMode = clamp(i(c, "repeat_mode"), 0, 2);
+            s.repeatMode = clamp(i(c, "repeat_mode"), 0, Schedule.REPEAT_DEADLINE);
+            s.type = clamp(i(c, "type"), 0, Schedule.TYPE_QUOTE);
+            s.alertMode = clamp(i(c, "alert_mode"), 0, Schedule.ALERT_NOTIFICATION);
+            s.categoryKey = str(c, "category_key");
+            s.customDates = str(c, "custom_dates");
+            s.quote = str(c, "quote");
+            s.quoteRandom = i(c, "quote_random") != 0;
+            s.deadlineAt = l(c, "deadline_at");
+            s.leadDays = str(c, "lead_days");
+            s.followUpDaily = i(c, "follow_up_daily") != 0;
+            s.overdueDaily = i(c, "overdue_daily") != 0;
+            s.status = clamp(i(c, "status"), 0, Schedule.STATUS_COMPLETED);
+            s.completedAt = l(c, "completed_at");
+            s.financeJson = str(c, "finance_json");
             s.startDate = l(c, "start_date");
             s.startMinute = clamp(i(c, "start_minute"), 0, 1439);
             s.endMinute = clamp(i(c, "end_minute"), 0, 1439);

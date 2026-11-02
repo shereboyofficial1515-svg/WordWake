@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
 
+import com.wordwake.app.data.DiagLog;
 import com.wordwake.app.data.ScheduleRepository;
 import com.wordwake.app.engine.ScheduleEngine;
 import com.wordwake.app.model.Schedule;
@@ -62,23 +63,31 @@ public final class AlarmScheduler {
         long now = System.currentTimeMillis();
         ScheduleEngine.Event ev = ScheduleEngine.nextEvent(s, now, ZoneId.systemDefault(), ringingInProcess);
 
+        // Tell the user when an alert passed without ringing (phone off, alarm held back by the system).
+        if (s.enabled && !s.isCompleted() && ScheduleEngine.wasMissed(s, ev, now)) {
+            s.lastOutcome = Schedule.OUTCOME_MISSED;
+            DiagLog.log(context, DiagLog.MISSED, s.id, s.displayTitle(), "expectedAt=" + s.nextTriggerAt);
+            Notifications.postMissed(context, s, s.nextTriggerAt);
+        }
+
         if (ev == null) {
             cancelFire(context, s.id);
-            s.nextTriggerAt = 0;
-            if (s.enabled && s.repeatMode == Schedule.REPEAT_ONCE && !ringingInProcess && s.ringActiveUntil <= now) {
-                // A one-time alert has nothing left: mark it completed (or missed) and disable it.
-                boolean neverRang = s.lastRingAt == 0 && s.dismissedOcc == 0;
-                boolean windowPassed = ScheduleEngine.windowFor(s.onceDate(), s.startMinute, s.endMinute,
-                        s.zone(ZoneId.systemDefault())).end <= now;
-                if (neverRang && windowPassed) {
+            if (s.enabled && !s.isCompleted() && s.isFiniteRepeat() && !ringingInProcess && s.ringActiveUntil <= now) {
+                // Nothing left to ring: switch it off. A one-time alert that was never registered
+                // long enough to fire (e.g. restored after its time) still counts as missed.
+                if (s.repeatMode == Schedule.REPEAT_ONCE && s.lastOutcome == Schedule.OUTCOME_NONE
+                        && s.lastRingAt == 0 && s.dismissedOcc == 0) {
                     s.lastOutcome = Schedule.OUTCOME_MISSED;
-                    Notifications.postMissed(context, s, ScheduleEngine.windowFor(s.onceDate(), s.startMinute,
-                            s.endMinute, s.zone(ZoneId.systemDefault())).start);
+                    long start = ScheduleEngine.windowFor(s.onceDate(), s.startMinute, s.endMinute,
+                            s.zone(ZoneId.systemDefault())).start;
+                    DiagLog.log(context, DiagLog.MISSED, s.id, s.displayTitle(), "expectedAt=" + start);
+                    Notifications.postMissed(context, s, start);
                 } else if (s.lastOutcome == Schedule.OUTCOME_NONE) {
                     s.lastOutcome = Schedule.OUTCOME_COMPLETED;
                 }
                 s.enabled = false;
             }
+            s.nextTriggerAt = 0;
             repo.saveState(s);
             return;
         }
@@ -99,12 +108,27 @@ public final class AlarmScheduler {
         } catch (SecurityException e) {
             // Exact access revoked between the check and the call.
             exact = false;
+            DiagLog.log(context, DiagLog.PERMISSION_FAILURE, s.id, "exact alarm access revoked");
             am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, ev.at, pi);
+        } catch (RuntimeException e) {
+            // For example the system's per-app limit on registered alarms.
+            DiagLog.log(context, DiagLog.SCHEDULE_FAILURE, s.id, e.getClass().getSimpleName());
+            return;
+        }
+        if (s.nextTriggerAt != ev.at || s.nextExact != exact) {
+            DiagLog.log(context, DiagLog.REGISTERED, s.id, "at=" + ev.at + " exact=" + exact + " kind=" + ev.kind);
+            if (!exact) DiagLog.log(context, DiagLog.PERMISSION_FAILURE, s.id, "exact alarms unavailable; using inexact fallback");
         }
         s.nextTriggerAt = ev.at;
         s.nextExact = exact;
         repo.saveState(s);
         Log.d(TAG, "Scheduled #" + s.id + " kind=" + ev.kind + " in " + (ev.at - now) / 1000 + "s exact=" + exact);
+    }
+
+    /** True when AlarmManager currently holds this schedule's alarm (for diagnostics and tests). */
+    public static boolean isRegistered(Context context, long id) {
+        return PendingIntent.getBroadcast(context, requestCode(id), fireIntent(context, id),
+                PendingIntent.FLAG_NO_CREATE | PendingIntent.FLAG_IMMUTABLE) != null;
     }
 
     public static void cancelFire(Context context, long id) {
@@ -170,7 +194,9 @@ public final class AlarmScheduler {
                 }
             } catch (RuntimeException e) {
                 Log.e(TAG, "Reconcile failed for #" + s.id, e);
+                DiagLog.log(context, DiagLog.SCHEDULE_FAILURE, s.id, e.getClass().getSimpleName());
             }
         }
+        ReliabilityService.sync(context);
     }
 }

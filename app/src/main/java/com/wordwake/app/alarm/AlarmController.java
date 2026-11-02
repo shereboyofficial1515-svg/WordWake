@@ -3,6 +3,10 @@ package com.wordwake.app.alarm;
 import android.content.Context;
 import android.util.Log;
 
+import androidx.core.app.NotificationManagerCompat;
+
+import com.wordwake.app.data.ContentRepository;
+import com.wordwake.app.data.DiagLog;
 import com.wordwake.app.data.ScheduleRepository;
 import com.wordwake.app.engine.ScheduleEngine;
 import com.wordwake.app.model.Schedule;
@@ -10,8 +14,8 @@ import com.wordwake.app.model.Schedule;
 import java.time.ZoneId;
 
 /**
- * Every alarm state transition goes through here: fire, stop (silence), snooze, dismiss and
- * end-of-window. All methods do disk I/O and must run on {@code AppExecutors.io} (a single
+ * Every alarm state transition goes through here: fire, stop (silence), snooze, dismiss, complete
+ * and end-of-window. All methods do disk I/O and must run on {@code AppExecutors.io} (a single
  * thread, so transitions never interleave).
  */
 public final class AlarmController {
@@ -20,12 +24,18 @@ public final class AlarmController {
 
     private AlarmController() {}
 
+    /** Loads a schedule, including the in-memory one used by the alarm system test. */
+    public static Schedule load(Context context, long id) {
+        if (id == SystemTest.SCHEDULE_ID) return SystemTest.schedule(context);
+        return new ScheduleRepository(context).get(id);
+    }
+
     /** An AlarmManager "fire" broadcast arrived. Validates it against stored state first. */
     static void onFire(Context context, long id) {
         ScheduleRepository repo = new ScheduleRepository(context);
         Schedule s = repo.get(id);
-        if (s == null || !s.enabled) {
-            // Deleted or disabled after the alarm was set: never ring, clean up.
+        if (s == null || !s.enabled || s.isCompleted()) {
+            // Deleted, paused or completed after the alarm was set: never ring, clean up.
             AlarmScheduler.cancelAll(context, id);
             return;
         }
@@ -41,26 +51,41 @@ public final class AlarmController {
     }
 
     static void ring(Context context, Schedule s, ScheduleEngine.Event ev, long now) {
-        long sessionEnd = (ev.kind == ScheduleEngine.KIND_RESUME && s.ringActiveUntil > now)
-                ? Math.min(s.ringActiveUntil, ev.occEnd)
-                : ScheduleEngine.sessionEnd(s, now, ev.occStart, ev.occEnd);
-        long soundEnd = ScheduleEngine.soundEnd(s, now, sessionEnd);
+        long delayMs = Math.max(0, now - ev.scheduledFor);
+        DiagLog.log(context, DiagLog.TRIGGERED, s.id, s.displayTitle(),
+                "kind=" + ev.kind + " delayMs=" + delayMs + " mode=" + (s.alertMode == Schedule.ALERT_ALARM ? "alarm" : "notification"));
 
         s.occStart = ev.occStart;
         s.lastRingAt = now;
         s.snoozeUntil = 0;
-        s.ringActiveUntil = sessionEnd;
         s.lastOutcome = Schedule.OUTCOME_NONE;
+
+        if (s.alertMode == Schedule.ALERT_NOTIFICATION) {
+            s.ringActiveUntil = 0;
+            new ScheduleRepository(context).saveState(s);
+            Notifications.cancelFor(context, s.id);
+            boolean posted = Notifications.postReminder(context, s, ev.occStart, ev.occEnd);
+            DiagLog.log(context, posted ? DiagLog.NOTIFICATION_POSTED : DiagLog.PERMISSION_FAILURE, s.id,
+                    posted ? "channel=reminder" : "notifications not allowed");
+            AlarmScheduler.reschedule(context, s, false);
+            return;
+        }
+
+        long sessionEnd = (ev.kind == ScheduleEngine.KIND_RESUME && s.ringActiveUntil > now)
+                ? Math.min(s.ringActiveUntil, ev.occEnd)
+                : ScheduleEngine.sessionEnd(s, now, ev.occStart, ev.occEnd);
+        long soundEnd = ScheduleEngine.soundEnd(s, now, sessionEnd);
+        s.ringActiveUntil = sessionEnd;
         new ScheduleRepository(context).saveState(s);
 
         Notifications.cancelFor(context, s.id);
         AlarmScheduler.scheduleEnd(context, s.id, sessionEnd);
-        Log.i(TAG, "Ringing #" + s.id + " kind=" + ev.kind + " for " + (sessionEnd - now) / 1000 + "s");
         boolean started = AlarmService.start(context, s.id, ev.occStart, ev.occEnd, now, sessionEnd, soundEnd, ev.kind, false);
         if (!started) {
             // Background start blocked: the notification channel plays the phone's alarm sound instead.
             s.ringActiveUntil = 0;
             new ScheduleRepository(context).saveState(s);
+            DiagLog.log(context, DiagLog.SCHEDULE_FAILURE, s.id, "foreground service start blocked; using fallback notification");
             Notifications.postFallback(context, s, ev.occStart, ev.occEnd);
         }
         AlarmScheduler.reschedule(context, s, started);
@@ -95,6 +120,7 @@ public final class AlarmController {
         if (s == null) return;
         s.ringActiveUntil = 0;
         repo.saveState(s);
+        DiagLog.log(context, DiagLog.STOPPED, id, s.displayTitle(), "");
         long occEnd = ScheduleEngine.windowOf(s, s.occStart, ZoneId.systemDefault()).end;
         if (System.currentTimeMillis() < occEnd) {
             Notifications.postMessage(context, s, s.occStart, occEnd, false);
@@ -121,7 +147,10 @@ public final class AlarmController {
         AlarmScheduler.cancelEnd(context, id);
         s.snoozeUntil = now + s.snoozeMinutes * 60_000L;
         s.ringActiveUntil = 0;
+        // A one-time alert is switched off once it has rung; snoozing it must bring it back.
+        s.enabled = true;
         repo.saveState(s);
+        DiagLog.log(context, DiagLog.SNOOZED, id, s.displayTitle(), "minutes=" + s.snoozeMinutes);
         Notifications.cancelFor(context, id);
         Notifications.postSnoozed(context, s, s.snoozeUntil);
         AlarmScheduler.reschedule(context, s, false);
@@ -141,6 +170,56 @@ public final class AlarmController {
         s.ringActiveUntil = 0;
         s.lastOutcome = Schedule.OUTCOME_DISMISSED;
         repo.saveState(s);
+        DiagLog.log(context, DiagLog.DISMISSED, id, s.displayTitle(), "");
+        AlarmScheduler.reschedule(context, s, false);
+    }
+
+    /**
+     * Marks the work done. A reminder that has a deadline or a limited set of dates stops for good;
+     * a plain recurring one finishes this occurrence, and its checklist resets for the next one.
+     */
+    public static void complete(Context context, long id) {
+        if (stopIfTest(context, id)) return;
+        ScheduleRepository repo = new ScheduleRepository(context);
+        Schedule s = repo.get(id);
+        if (ActiveAlarm.isRinging(id)) AlarmService.stop(context);
+        AlarmScheduler.cancelEnd(context, id);
+        Notifications.cancelFor(context, id);
+        if (s == null) return;
+        long now = System.currentTimeMillis();
+        s.snoozeUntil = 0;
+        s.ringActiveUntil = 0;
+        s.lastOutcome = Schedule.OUTCOME_COMPLETED;
+        DiagLog.log(context, DiagLog.COMPLETED, id, s.displayTitle(), "");
+        if (s.isFiniteRepeat() || s.deadlineAt > 0) {
+            s.status = Schedule.STATUS_COMPLETED;
+            s.completedAt = now;
+            s.enabled = false;
+            s.nextTriggerAt = 0;
+            repo.saveState(s);
+            AlarmScheduler.cancelAll(context, id);
+            return;
+        }
+        ScheduleEngine.Event ev = ScheduleEngine.nextEvent(s, now, ZoneId.systemDefault(), true);
+        if (s.occStart != 0 && ev != null && ev.occStart == s.occStart) s.dismissedOcc = s.occStart;
+        else if (s.occStart != 0 && now < ScheduleEngine.windowOf(s, s.occStart, ZoneId.systemDefault()).end) s.dismissedOcc = s.occStart;
+        s.completedAt = now;
+        repo.saveState(s);
+        new ContentRepository(context).resetChecklist(id);
+        AlarmScheduler.reschedule(context, s, false);
+    }
+
+    /** Reopens completed work and schedules its remaining alerts again. */
+    public static void reopen(Context context, long id) {
+        ScheduleRepository repo = new ScheduleRepository(context);
+        Schedule s = repo.get(id);
+        if (s == null) return;
+        s.status = Schedule.STATUS_IN_PROGRESS;
+        s.completedAt = 0;
+        s.enabled = true;
+        s.lastOutcome = Schedule.OUTCOME_NONE;
+        repo.saveState(s);
+        DiagLog.log(context, DiagLog.REOPENED, id, s.displayTitle(), "");
         AlarmScheduler.reschedule(context, s, false);
     }
 
@@ -165,6 +244,7 @@ public final class AlarmController {
         boolean windowOver = now >= occEnd - ScheduleEngine.DUE_TOLERANCE_MS;
         if (windowOver) {
             if (s.lastOutcome == Schedule.OUTCOME_NONE) s.lastOutcome = Schedule.OUTCOME_ENDED;
+            if (wasActive) DiagLog.log(context, DiagLog.AUTO_DISMISSED, id, s.displayTitle(), "reason=end_time");
             if (s.autoDismiss) {
                 Notifications.cancelFor(context, id);
             } else if (wasActive) {
@@ -178,13 +258,14 @@ public final class AlarmController {
         AlarmScheduler.reschedule(context, s, false);
     }
 
-    /** Schedule disabled or about to be deleted: stop any ring and remove every alarm/notification. */
+    /** Schedule paused or about to be deleted: stop any ring and remove every alarm/notification. */
     public static void onDisabledOrDeleted(Context context, long id) {
         ActiveAlarm.Session cur = ActiveAlarm.get();
         if (cur != null && cur.scheduleId == id) AlarmService.stop(context);
         AlarmScheduler.cancelAll(context, id);
         Notifications.cancelFor(context, id);
-        androidx.core.app.NotificationManagerCompat.from(context).cancel(Notifications.statusId(id));
+        NotificationManagerCompat.from(context).cancel(Notifications.statusId(id));
+        DiagLog.log(context, DiagLog.CANCELLED, id, "");
     }
 
     /** Another schedule's alarm replaced this one; keep its message available quietly. */

@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_reminders">Reminders</string>
+    <string name="nav_calendar">Calendar</string>
+    <string name="nav_create">Create</string>
+    <string name="nav_settings">Settings</string>
+    <string name="create_heading">What do you want to remember?</string>
+
+    <!-- Types -->
+    <string name="type_reminder">Reminder</string>
+    <string name="type_reminder_hint">A notification at the time you choose</string>
+    <string name="type_alarm">Alarm</string>
+    <string name="type_alarm_hint">Sound, vibration and the full screen</string>
+    <string name="type_task">Task</string>
+    <string name="type_task_hint">Something to do, with a checklist</string>
+    <string name="type_appointment">Appointment</string>
+    <string name="type_appointment_hint">A meeting, visit or call</string>
+    <string name="type_deadline">Deadline</string>
+    <string name="type_deadline_hint">Alerts leading up to a date</string>
+    <string name="type_tax">Tax</string>
+    <string name="type_tax_hint">Tax filing or payment you need to track</string>
+    <string name="type_bill">Bill</string>
+    <string name="type_bill_hint">Rent, electricity, a loan repayment</string>
+    <string name="type_quote">Quote</string>
+    <string name="type_quote_hint">A motivational message on a schedule</string>
+
+    <!-- Categories -->
+    <string name="cat_personal">Personal</string>
+    <string name="cat_business">Business</string>
+    <string name="cat_finance">Finance</string>
+    <string name="cat_tax">Tax &amp; Government</string>
+    <string name="cat_appointments">Appointments</string>
+    <string name="cat_education">Education</string>
+    <string name="cat_health">Health &amp; Wellness</string>
+    <string name="cat_travel">Travel</string>
+    <string name="cat_bills">Bills &amp; Payments</string>
+    <string name="cat_documents">Documents &amp; Renewals</string>
+    <string name="cat_motivation">Motivation</string>
+    <string name="categories_title">Categories &amp; sounds</string>
+    <string name="category_add">Add a custom category</string>
+    <string name="category_name_hint">Category name</string>
+    <string name="category_manage">Manage</string>
+    <string name="category_sound_hint">Tap a category to choose the sound its new reminders start with. Hold a custom category to delete it.</string>
+    <string name="category_sound_default">Default sound</string>
+    <string name="category_delete_message">Delete this category? Reminders in it will show as Personal.</string>
+
+    <!-- Status and badges -->
+    <string name="status_title">Status</string>
+    <string name="status_not_started">Not started</string>
+    <string name="status_in_progress">In progress</string>
+    <string name="status_waiting">Waiting for information</string>
+    <string name="status_ready">Ready for payment</string>
+    <string name="status_completed">Completed</string>
+    <string name="badge_upcoming">Upcoming</string>
+    <string name="badge_due_today">Due today</string>
+    <string name="badge_urgent">Urgent</string>
+    <string name="badge_overdue">Overdue</string>
+    <string name="badge_completed">Completed</string>
+    <string name="badge_paused">Paused</string>
+
+    <!-- Dashboard -->
+    <string name="greeting_morning">Good morning</string>
+    <string name="greeting_afternoon">Good afternoon</string>
+    <string name="greeting_evening">Good evening</string>
+    <string name="quick_actions">Quick actions</string>
+    <string name="quick_reminder">Reminder</string>
+    <string name="quick_alarm">Alarm</string>
+    <string name="quick_tax">Tax reminder</string>
+    <string name="quick_appointment">Appointment</string>
+    <string name="quick_task">Task</string>
+    <string name="quick_quote">Quote</string>
+    <string name="overview_title">Today\'s overview</string>
+    <string name="stat_today">Today</string>
+    <string name="stat_appointments">Appointments</string>
+    <string name="stat_tasks_today">Tasks due today</string>
+    <string name="stat_overdue">Overdue</string>
+    <string name="stat_completed">Completed</string>
+    <string name="stat_pending">Pending</string>
+    <string name="productivity_format">%1$d%% of tracked work completed · %2$d reminders in total</string>
+    <string name="upcoming_title">Upcoming</string>
+    <string name="see_all">See all</string>
+
+    <!-- Reminder list -->
+    <string name="search_hint">Search reminders</string>
+    <string name="filter_all">All</string>
+    <string name="filter_active">Active</string>
+    <string name="filter_type">Type</string>
+    <string name="filter_category">Category</string>
+    <string name="filter_date">Date</string>
+    <string name="filter_all_types">All types</string>
+    <string name="filter_all_categories">All categories</string>
+    <string name="filter_any_date">Any date</string>
+    <string name="filter_today">Today</string>
+    <string name="filter_this_week">This week</string>
+    <string name="filter_this_month">This month</string>
+    <string name="reminders_empty">No reminders match. Tap Create to add one.</string>
+    <string name="item_category_format">%1$s · %2$s</string>
+    <string name="item_repeat_format">%1$s · %2$s</string>
+    <string name="item_steps">%1$d of %2$d steps done</string>
+    <string name="item_inexact">Exact alarms are off, so this may arrive late</string>
+    <string name="style_notification">Notification</string>
+
+    <string name="menu_complete">Mark as completed</string>
+    <string name="menu_reopen">Reopen</string>
+    <string name="menu_pause">Pause</string>
+    <string name="menu_resume">Resume</string>
+    <string name="menu_reschedule">Move to another date</string>
+    <string name="menu_history">History</string>
+    <string name="toggle_completed">This reminder is completed. Reopen it first.</string>
+    <string name="delete_message_recurring">“%1$s” is a repeating schedule. Deleting it removes all its future alerts, its checklist and its attachments. This cannot be undone. To stop it for now, use Pause instead.</string>
+    <string name="reschedule_recurring_title">This reminder repeats</string>
+    <string name="reschedule_recurring_message">Changing its date affects every future alert, so open the editor to make the change deliberately.</string>
+    <string name="pick_new_date">Move to date</string>
+
+    <!-- Calendar -->
+    <string name="calendar_prev">Previous month</string>
+    <string name="calendar_next">Next month</string>
+    <string name="calendar_day">Day</string>
+    <string name="calendar_week">Week</string>
+    <string name="calendar_empty">Nothing scheduled.</string>
+    <string name="calendar_deadline">Deadline</string>
+    <string name="planner_week_format">%1$s – %2$s</string>
+    <plurals name="calendar_reminders">
+        <item quantity="one">%1$d reminder</item>
+        <item quantity="other">%1$d reminders</item>
+    </plurals>
+
+    <!-- Editor -->
+    <string name="label_type">Type of reminder</string>
+    <string name="label_category">Category</string>
+    <string name="label_status">Status</string>
+    <string name="label_first_alert">First alert from</string>
+    <string name="label_starting_on">Starting on</string>
+    <string name="label_alert_time">Alert time</string>
+    <string name="repeat_weekly_short">Weekly</string>
+    <string name="repeat_monthly_short">Monthly</string>
+    <string name="repeat_yearly_short">Yearly</string>
+    <string name="repeat_custom_short">Custom dates</string>
+    <string name="repeat_deadline_short">Before a deadline</string>
+    <string name="repeat_weekly_on">Every %1$s</string>
+    <string name="repeat_monthly_on">Monthly on day %1$d</string>
+    <string name="repeat_yearly_on">Every year on %1$s</string>
+    <string name="repeat_deadline_alerts">Alerts before the deadline</string>
+    <plurals name="repeat_custom_dates">
+        <item quantity="one">%1$d custom date</item>
+        <item quantity="other">%1$d custom dates</item>
+    </plurals>
+    <string name="add_date">Add a date</string>
+    <string name="quick_5m">5m</string>
+    <string name="quick_10m">10m</string>
+    <string name="quick_15m">15m</string>
+    <string name="quick_30m">30m</string>
+    <string name="quick_1h">1h</string>
+    <string name="quick_2h">2h</string>
+    <string name="quick_custom">Custom</string>
+    <string name="custom_duration_title">Alert length in minutes</string>
+    <string name="custom_interval">Custom…</string>
+    <string name="custom_interval_title">Remind every (minutes)</string>
+    <string name="number_range">Enter a number from %1$d to %2$d.</string>
+    <string name="section_plan">Action plan: what should I do?</string>
+    <string name="section_deadline">Deadline</string>
+    <string name="section_quote">Motivational message / quote</string>
+    <string name="section_attachments">Pictures &amp; attachments</string>
+    <string name="section_alert">Alert &amp; sound</string>
+    <string name="section_finance">Tax &amp; payment details</string>
+    <string name="plan_hint">Steps to follow when this comes up. You can tick them off on the alert screen.</string>
+    <string name="plan_add">Add step</string>
+    <string name="plan_use_tax">Use example steps</string>
+    <string name="step_hint">Describe this step</string>
+    <string name="step_done">Step done</string>
+    <string name="step_up">Move step up</string>
+    <string name="step_down">Move step down</string>
+    <string-array name="tax_checklist_example">
+        <item>Check the applicable deadline</item>
+        <item>Gather the required documents</item>
+        <item>Contact the tax authority or my accountant</item>
+        <item>Confirm the correct amount</item>
+        <item>Pay through the official channel</item>
+        <item>Save the receipt</item>
+        <item>Confirm that it is complete</item>
+    </string-array>
+    <string name="quote_hint">Your own words, or pick a saved quote</string>
+    <string name="quote_pick">Choose a saved quote</string>
+    <string name="quote_pick_title">Saved quotes</string>
+    <string name="quote_random">Random quote each time</string>
+    <string name="quote_random_summary">Picks from your favorites, or from all saved quotes</string>
+    <string name="attach_hint">Stored privately on this phone. They are never uploaded.</string>
+    <string name="attach_gallery">Pictures</string>
+    <string name="attach_camera">Camera</string>
+    <string name="attach_document">Document</string>
+    <string name="attachment_failed">Could not attach this file. It may be unreadable or larger than 50 MB.</string>
+    <string name="attachment_no_camera">No camera app is available.</string>
+    <string name="attachment_camera_name">Photo</string>
+    <string name="deadline_enable">This has a deadline</string>
+    <string name="deadline_enable_summary">Separate from the alert times. Shows the time remaining.</string>
+    <string name="deadline_pick_date">Deadline date</string>
+    <string name="deadline_pick_time">Deadline time</string>
+    <string name="lead_hint">Alert this many days before (e.g. 30,14,7,3,0)</string>
+    <string name="follow_up">Follow up every day</string>
+    <string name="follow_up_summary">From the first alert date until the deadline or until it is completed</string>
+    <string name="overdue_daily">Keep alerting when overdue</string>
+    <string name="overdue_daily_summary">Every day after the deadline until it is completed</string>
+    <string name="alert_alarm">Alarm</string>
+    <string name="alert_notification">Notification</string>
+    <string name="finance_note">You enter these details. WordWake does not supply tax rules, rates or deadlines, and it never makes payments or submits anything.</string>
+    <string name="finance_type">Tax or bill type</string>
+    <string name="finance_jurisdiction">Country or jurisdiction</string>
+    <string name="finance_authority">Authority or company</string>
+    <string name="finance_year">Applicable year or period</string>
+    <string name="finance_filing">Filing deadline</string>
+    <string name="finance_payment">Payment deadline</string>
+    <string name="finance_pick_date">Choose date</string>
+    <string name="finance_amount">Amount due, if known</string>
+    <string name="finance_contact">Accountant or contact (name, phone)</string>
+    <string name="finance_website">Official website</string>
+    <string name="finance_documents">Required documents</string>
+    <string name="finance_open_website">Open the saved website</string>
+    <string name="finance_call">Call the saved contact</string>
+    <string name="err_no_dates">Add at least one date.</string>
+    <string name="err_no_deadline">Set a deadline for alerts before a deadline.</string>
+    <string name="err_no_leads">Enter the days before the deadline to alert, or turn on daily follow-ups.</string>
+    <string name="saved_completed">Saved as completed.</string>
+    <string name="action_complete">Mark completed</string>
+    <string name="action_details">View details</string>
+
+    <!-- Details -->
+    <string name="details_title">Reminder</string>
+    <string name="details_what">What you need to do</string>
+    <string name="details_checklist">Checklist · %1$d of %2$d done</string>
+    <string name="details_quote_random">A random saved quote is shown each time.</string>
+    <string name="details_actions">Actions</string>
+    <string name="details_status_format">Status: %1$s</string>
+    <string name="details_cannot_open">No app on this phone can open this.</string>
+    <string name="details_attachment_missing">This file is no longer available.</string>
+    <string name="alarm_checklist_title">Checklist</string>
+    <string name="alarm_quote_format">“%1$s”</string>
+    <string name="deadline_line">Deadline: %1$s · %2$s</string>
+    <string name="deadline_line_done">Deadline: %1$s</string>
+    <string name="deadline_in">in %1$s</string>
+    <string name="deadline_overdue">overdue by %1$s</string>
+    <string name="notif_deadline">Deadline: %1$s (%2$s)</string>
+    <plurals name="days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
+
+    <!-- History -->
+    <string name="history_title">Reminder history</string>
+    <string name="history_empty">Nothing has happened yet.</string>
+    <string name="event_created">Created</string>
+    <string name="event_rang">Alert delivered</string>
+    <string name="event_missed">Missed</string>
+    <string name="event_stopped">Sound stopped</string>
+    <string name="event_snoozed">Snoozed</string>
+    <string name="event_dismissed">Dismissed</string>
+    <string name="event_auto_ended">Ended at the stop time</string>
+    <string name="event_completed">Completed</string>
+    <string name="event_reopened">Reopened</string>
+    <string name="event_other">Event</string>
+
+    <!-- Quotes -->
+    <string name="quotes_title">Quotes</string>
+    <string name="quotes_add">Add your own quote</string>
+    <string name="quotes_hint">Your words</string>
+    <string name="quotes_favorite">Favorite</string>
+
+    <!-- Channels added for reminders -->
+    <string name="channel_reminder">Reminders</string>
+    <string name="channel_reminder_desc">Ordinary reminders that use the notification style.</string>
+    <string name="channel_reliability">Reliable delivery</string>
+    <string name="channel_reliability_desc">Shown while reliable delivery is on. You can hide this notification here.</string>
+    <string name="notif_reliability_title">Reliable delivery is on</string>
+    <string name="notif_reliability_text">Keeps WordWake running in the background. This does not work on every phone.</string>
+
+    <!-- Settings additions -->
+    <string name="settings_diag_summary">Status, a real end-to-end test, and exportable logs</string>
+    <string name="settings_reliable">Reliable delivery</string>
+    <string name="settings_reliable_summary">Tries to keep WordWake running in the background, with a silent notification while alerts are scheduled. It may help on some phones. It did not help on a tested TECNO phone. Use the system test to check yours.</string>
+    <string name="settings_content">Your content</string>
+    <string name="settings_categories_summary">Custom categories and a sound for each</string>
+    <string name="settings_quotes_summary">Your quotes, built-in quotes and favorites</string>
+    <string name="settings_history_summary">Everything that has happened, newest first</string>
+    <string name="settings_backup">Backup</string>
+    <string name="settings_backup_export">Save a backup file</string>
+    <string name="settings_backup_export_summary">Reminders, checklists, quotes and attachments. The file is not encrypted, so keep it somewhere safe.</string>
+    <string name="settings_backup_restore">Restore from a backup file</string>
+    <string name="settings_backup_restore_summary">Replaces what is on this phone</string>
+    <string name="backup_done">Backup saved.</string>
+    <string name="backup_failed">The backup could not be saved.</string>
+    <string name="restore_title">Replace all reminders?</string>
+    <string name="restore_message">Everything currently in WordWake will be replaced with the backup. This cannot be undone.</string>
+    <string name="restore_confirm">Replace</string>
+    <string name="restore_done">Restored. Your alarms are registered again.</string>
+    <string name="restore_failed">This file could not be restored. Nothing was changed.</string>
+
+    <!-- Delivery problems -->
+    <string name="status_delivery_title">This phone is holding back alarms</string>
+    <string name="status_delivery_detail">An alert was missed or arrived late. Tap to see what happened and run a test.</string>
+    <string name="perm_oem_title">This phone may still hold alarms back</string>
+    <string name="state_may_not_ring">Test it</string>
+    <string name="perm_oem_text">Some phones stop apps from running in the background even with every setting above allowed. A tested TECNO KM6 did this. WordWake then rings when it is next opened, if the alert is still open, and reports the rest as missed. Run the system test with the screen off to check your phone. For anything important, add a backup alarm in Clock from the reminder\'s menu.</string>
+    <string name="menu_clock_backup">Add backup alarm in Clock</string>
+    <string name="clock_backup_title">Add a backup alarm in Clock?</string>
+    <string name="clock_backup_message">This adds a matching %1$s alarm to your phone\'s Clock app, which keeps working when this phone holds back WordWake. It rings with Clock\'s sound and shows only the title. WordWake cannot change or remove it later, so if you edit or delete this reminder, change the Clock alarm yourself.</string>
+    <string name="clock_backup_add">Add alarm</string>
+    <string name="clock_backup_done">Backup alarm sent to Clock. Check it there.</string>
+    <string name="clock_backup_failed">No Clock app on this phone accepted the alarm.</string>
+    <string name="clock_backup_unsupported">Clock can only hold daily, weekly and selected-day alarms, or a one-time alarm within the next 24 hours.</string>
+
+    <!-- Diagnostics -->
+    <string name="diag_title">Alarm diagnostics</string>
+    <string name="diag_test_header">Run alarm system test</string>
+    <string name="diag_run_test">RUN ALARM SYSTEM TEST</string>
+    <string name="diag_test_explain">Registers a real alarm for %1$d seconds from now. To test your phone\'s real behavior, press the power button to turn the screen off straight after starting. The test tone plays for 15 seconds.</string>
+    <string name="diag_test_title">Alarm system test</string>
+    <string name="diag_test_body">This is a real alarm registered with Android by WordWake. It stops by itself.</string>
+    <string name="diag_test_register_failed">Android would not accept the test alarm.</string>
+    <string name="diag_test_waiting">Waiting for the alarm: due in %1$d seconds.</string>
+    <string name="diag_test_not_delivered">NOT DELIVERED. The alarm is %1$d seconds overdue, so this phone held it back. WordWake cannot override that. For anything important, add a backup alarm in Clock from the reminder\'s menu.</string>
+    <string name="diag_test_on_time">PASSED: alarm delivered %1$.1f seconds after its time.</string>
+    <string name="diag_test_late">LATE: alarm delivered %1$.1f seconds after its time.</string>
+    <string name="diag_test_screen_off">Screen was off when it fired.</string>
+    <string name="diag_test_screen_on">Screen was on when it fired, so this does not prove delivery while the phone sleeps. Repeat with the screen off.</string>
+    <string name="diag_test_service_ok">Alarm service started.</string>
+    <string name="diag_test_service_missing">Alarm service did not start.</string>
+    <string name="diag_test_notif_ok">Alarm notification posted.</string>
+    <string name="diag_test_notif_missing">Alarm notification was not shown. Check the notification permission.</string>
+    <string name="diag_test_audio_ok">Audio player was running and its position advanced.</string>
+    <string name="diag_test_audio_failed">Audio player was not running.</string>
+    <string name="diag_test_audio_pending">Audio check not finished.</string>
+    <string name="diag_test_audible_note">The app cannot verify you could actually hear it. That depends on your volume and speaker.</string>
+    <string name="diag_scheduling">Scheduling</string>
+    <string name="diag_total">Total reminders</string>
+    <string name="diag_registered">Registered with Android</string>
+    <string name="diag_registered_value">%1$d of %2$d scheduled alerts</string>
+    <string name="diag_next">Next scheduled alert</string>
+    <string name="diag_inexact">(inexact)</string>
+    <string name="diag_none">None</string>
+    <string name="diag_engine">Scheduling engine</string>
+    <string name="diag_engine_ok">Healthy: stored schedules match Android\'s alarms</string>
+    <string name="diag_engine_mismatch">Mismatch: some alerts are not registered. Reopen the app to repair them.</string>
+    <string name="diag_recent">Recent activity</string>
+    <string name="diag_last_trigger">Last alarm triggered</string>
+    <string name="diag_last_notification">Last notification posted</string>
+    <string name="diag_last_failure">Last failure</string>
+    <string name="diag_last_reboot">Last reboot recovery</string>
+    <string name="diag_last_exit">How the app last stopped</string>
+    <string name="diag_permissions">Permissions and restrictions</string>
+    <string name="diag_battery_optimized">Optimized by Android</string>
+    <string name="diag_reliable">Reliable delivery</string>
+    <string name="diag_reliable_running">On and running</string>
+    <string name="diag_reliable_idle">On, waiting for a scheduled alert</string>
+    <string name="diag_reliable_off">Off</string>
+    <string name="diag_device">Device</string>
+    <string name="diag_log">Technical log</string>
+    <string name="diag_export">Export diagnostics to a file</string>
+    <string name="diag_exported">Diagnostics saved. They contain no reminder titles or message text.</string>
+    <string name="diag_export_failed">The file could not be saved.</string>
+</resources>

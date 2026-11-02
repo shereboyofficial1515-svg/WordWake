@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/action_edit" android:title="@string/menu_edit" />
+    <item android:id="@+id/action_complete" android:title="@string/menu_complete" />
+    <item android:id="@+id/action_pause" android:title="@string/menu_pause" />
+    <item android:id="@+id/action_reschedule" android:title="@string/menu_reschedule" />
     <item android:id="@+id/action_duplicate" android:title="@string/menu_duplicate" />
+    <item android:id="@+id/action_history" android:title="@string/menu_history" />
+    <item android:id="@+id/action_clock" android:title="@string/menu_clock_backup" />
     <item android:id="@+id/action_test" android:title="@string/menu_test" />
     <item android:id="@+id/action_delete" android:title="@string/menu_delete" />
 </menu>

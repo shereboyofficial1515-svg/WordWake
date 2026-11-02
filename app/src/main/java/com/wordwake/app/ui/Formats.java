@@ -67,6 +67,18 @@ public final class Formats {
                 return c.getString(R.string.repeat_once_on, date(s.onceDate()));
             case Schedule.REPEAT_DAILY:
                 return c.getString(R.string.repeat_daily);
+            case Schedule.REPEAT_WEEKLY:
+                return c.getString(R.string.repeat_weekly_on, s.onceDate().getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.getDefault()));
+            case Schedule.REPEAT_MONTHLY:
+                return c.getString(R.string.repeat_monthly_on, s.onceDate().getDayOfMonth());
+            case Schedule.REPEAT_YEARLY:
+                return c.getString(R.string.repeat_yearly_on, s.onceDate().format(DateTimeFormatter.ofPattern("d MMMM", Locale.getDefault())));
+            case Schedule.REPEAT_CUSTOM_DATES: {
+                int n = s.customDateList().size();
+                return c.getResources().getQuantityString(R.plurals.repeat_custom_dates, n, n);
+            }
+            case Schedule.REPEAT_DEADLINE:
+                return c.getString(R.string.repeat_deadline_alerts);
             default:
                 if ((s.daysMask & Schedule.ALL_DAYS) == Schedule.WEEKDAYS) return c.getString(R.string.repeat_weekdays);
                 if ((s.daysMask & Schedule.ALL_DAYS) == 0x60) return c.getString(R.string.repeat_weekends);
@@ -89,7 +101,53 @@ public final class Formats {
         return c.getString(R.string.window_format, minuteOfDay(c, s.startMinute), end, duration(c, mins));
     }
 
+    public static String typeName(Context c, int type) {
+        switch (type) {
+            case Schedule.TYPE_ALARM: return c.getString(R.string.type_alarm);
+            case Schedule.TYPE_TASK: return c.getString(R.string.type_task);
+            case Schedule.TYPE_APPOINTMENT: return c.getString(R.string.type_appointment);
+            case Schedule.TYPE_DEADLINE: return c.getString(R.string.type_deadline);
+            case Schedule.TYPE_TAX: return c.getString(R.string.type_tax);
+            case Schedule.TYPE_BILL: return c.getString(R.string.type_bill);
+            case Schedule.TYPE_QUOTE: return c.getString(R.string.type_quote);
+            default: return c.getString(R.string.type_reminder);
+        }
+    }
+
+    public static String statusName(Context c, int status) {
+        switch (status) {
+            case Schedule.STATUS_IN_PROGRESS: return c.getString(R.string.status_in_progress);
+            case Schedule.STATUS_WAITING: return c.getString(R.string.status_waiting);
+            case Schedule.STATUS_READY: return c.getString(R.string.status_ready);
+            case Schedule.STATUS_COMPLETED: return c.getString(R.string.status_completed);
+            default: return c.getString(R.string.status_not_started);
+        }
+    }
+
+    /** "in 3 days" or "2 hours overdue". */
+    public static String deadlineRemaining(Context c, long deadlineAt) {
+        long diff = deadlineAt - System.currentTimeMillis();
+        long abs = Math.abs(diff);
+        String span;
+        if (abs >= 86_400_000L) {
+            int days = (int) (abs / 86_400_000L);
+            span = c.getResources().getQuantityString(R.plurals.days, days, days);
+        } else if (abs >= 3_600_000L) {
+            int hours = (int) (abs / 3_600_000L);
+            span = c.getResources().getQuantityString(R.plurals.duration_hours, hours, hours);
+        } else {
+            span = c.getString(R.string.duration_min, (int) Math.max(1, abs / 60_000L));
+        }
+        return c.getString(diff >= 0 ? R.string.deadline_in : R.string.deadline_overdue, span);
+    }
+
+    public static String deadlineLine(Context c, Schedule s) {
+        if (s.isCompleted()) return c.getString(R.string.deadline_line_done, dateTime(c, s.deadlineAt));
+        return c.getString(R.string.deadline_line, dateTime(c, s.deadlineAt), deadlineRemaining(c, s.deadlineAt));
+    }
+
     public static String alertStyle(Context c, Schedule s) {
+        if (s.alertMode == Schedule.ALERT_NOTIFICATION && s.reminderMinutes == 0) return c.getString(R.string.style_notification);
         if (s.reminderMinutes > 0) return c.getString(R.string.style_reminders_every, s.reminderMinutes);
         return c.getString(R.string.style_continuous);
     }

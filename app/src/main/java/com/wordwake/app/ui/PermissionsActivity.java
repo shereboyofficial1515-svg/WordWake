@@ -140,6 +140,9 @@ public class PermissionsActivity extends AppCompatActivity {
             RowViews.statusCard(list, getString(R.string.perm_autostart_title), getString(R.string.state_check_manually), false,
                     getString(R.string.perm_autostart_text), getString(R.string.perm_open_app_settings),
                     v -> PermissionStatus.open(this, PermissionStatus.appDetails(this)));
+            RowViews.statusCard(list, getString(R.string.perm_oem_title), getString(R.string.state_may_not_ring), false,
+                    getString(R.string.perm_oem_text), getString(R.string.diag_title),
+                    v -> startActivity(new android.content.Intent(this, DiagnosticsActivity.class)));
         }
 
         // 7. Honest limits

@@ -6,16 +6,21 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.media.AudioAttributes;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import com.wordwake.app.R;
+import com.wordwake.app.data.AttachmentStore;
+import com.wordwake.app.data.ContentRepository;
+import com.wordwake.app.engine.ScheduleEngine;
 import com.wordwake.app.model.Schedule;
 import com.wordwake.app.sound.SoundCatalog;
 import com.wordwake.app.ui.AlarmActivity;
 import com.wordwake.app.ui.MainActivity;
+import com.wordwake.app.ui.ReminderDetailActivity;
 import com.wordwake.app.ui.Formats;
 
 /** Notification channels and builders. */
@@ -29,8 +34,13 @@ public final class Notifications {
     public static final String CH_MESSAGE = "alarm_message";
     /** Missed alerts and warnings. */
     public static final String CH_STATUS = "status";
+    /** Ordinary reminders that use the notification alert style. */
+    public static final String CH_REMINDER = "reminders";
+    /** The silent notification shown while reliable delivery is on. */
+    public static final String CH_RELIABILITY = "reliable_delivery";
 
     public static final int ID_RINGING = 1000;
+    public static final int ID_RELIABILITY = 1001;
     private static final int BASE_MESSAGE = 200_000;
     private static final int BASE_FALLBACK = 400_000;
     private static final int BASE_STATUS = 600_000;
@@ -69,6 +79,18 @@ public final class Notifications {
                 context.getString(R.string.channel_status), NotificationManager.IMPORTANCE_DEFAULT);
         status.setDescription(context.getString(R.string.channel_status_desc));
         nm.createNotificationChannel(status);
+
+        NotificationChannel reminder = new NotificationChannel(CH_REMINDER,
+                context.getString(R.string.channel_reminder), NotificationManager.IMPORTANCE_HIGH);
+        reminder.setDescription(context.getString(R.string.channel_reminder_desc));
+        reminder.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+        nm.createNotificationChannel(reminder);
+
+        NotificationChannel reliable = new NotificationChannel(CH_RELIABILITY,
+                context.getString(R.string.channel_reliability), NotificationManager.IMPORTANCE_MIN);
+        reliable.setDescription(context.getString(R.string.channel_reliability_desc));
+        reliable.setShowBadge(false);
+        nm.createNotificationChannel(reliable);
     }
 
     public static int messageId(long scheduleId) {
@@ -107,6 +129,82 @@ public final class Notifications {
         return PendingIntent.getActivity(context, 0, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
+    static Notification reliability(Context context) {
+        return new NotificationCompat.Builder(context, CH_RELIABILITY)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle(context.getString(R.string.notif_reliability_title))
+                .setContentText(context.getString(R.string.notif_reliability_text))
+                .setContentIntent(openApp(context))
+                .setPriority(NotificationCompat.PRIORITY_MIN)
+                .setOngoing(true)
+                .setSilent(true)
+                .setShowWhen(false)
+                .build();
+    }
+
+    /** The details screen; asks Android for the unlock when the phone is locked. */
+    static PendingIntent details(Context context, long scheduleId) {
+        Intent i = new Intent(context, ReminderDetailActivity.class)
+                .putExtra(ReminderDetailActivity.EXTRA_ID, scheduleId)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        return PendingIntent.getActivity(context, (int) (scheduleId & 0x7FFFFFFF), i,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    }
+
+    /** Applies the attached picture where Android can show one, otherwise the full text. */
+    private static void applyStyle(Context context, NotificationCompat.Builder b, Schedule s) {
+        Bitmap image = s.id > 0 ? AttachmentStore.firstImage(context, s.id, 1024) : null;
+        String text = expandedText(context, s);
+        if (image != null) {
+            b.setLargeIcon(image);
+            b.setStyle(new NotificationCompat.BigPictureStyle().bigPicture(image).setSummaryText(text));
+        } else {
+            b.setStyle(new NotificationCompat.BigTextStyle().bigText(text));
+        }
+    }
+
+    private static String expandedText(Context context, Schedule s) {
+        String text = s.body == null ? "" : s.body;
+        String quote = s.quoteRandom && s.id > 0 ? new ContentRepository(context).randomQuote() : s.quote;
+        if (quote != null && !quote.trim().isEmpty()) {
+            String q = context.getString(R.string.alarm_quote_format, quote.trim());
+            text = text.isEmpty() ? q : text + "\n\n" + q;
+        }
+        if (s.deadlineAt > 0) {
+            String line = context.getString(R.string.notif_deadline, Formats.dateTime(context, s.deadlineAt),
+                    Formats.deadlineRemaining(context, s.deadlineAt));
+            text = text.isEmpty() ? line : text + "\n\n" + line;
+        }
+        return text;
+    }
+
+    /** A less intrusive alert: a normal high-priority notification with the channel's sound. */
+    static boolean postReminder(Context context, Schedule s, long occStart, long occEnd) {
+        NotificationCompat.Builder b = new NotificationCompat.Builder(context, CH_REMINDER)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle(s.displayTitle())
+                .setContentText(firstLine(s.body.isEmpty() ? s.quote : s.body))
+                .setCategory(NotificationCompat.CATEGORY_REMINDER)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setContentIntent(details(context, s.id))
+                .setAutoCancel(true)
+                .setShowWhen(true)
+                .setWhen(occStart);
+        applyStyle(context, b, s);
+        long now = System.currentTimeMillis();
+        if (ScheduleEngine.canSnooze(s, now, occEnd)) {
+            b.addAction(0, context.getString(R.string.action_snooze_n, s.snoozeMinutes),
+                    action(context, AlarmActionReceiver.ACTION_SNOOZE, s.id));
+        }
+        if (s.isTracked()) {
+            b.addAction(0, context.getString(R.string.action_complete), action(context, AlarmActionReceiver.ACTION_COMPLETE, s.id));
+        }
+        b.addAction(0, context.getString(R.string.action_dismiss), action(context, AlarmActionReceiver.ACTION_DISMISS, s.id));
+        if (s.autoDismiss && occEnd > now) b.setTimeoutAfter(occEnd - now);
+        return notify(context, messageId(s.id), b.build());
+    }
+
     /** The foreground-service notification shown while the alarm rings. */
     static Notification ringing(Context context, Schedule s, ActiveAlarm.Session session, boolean canSnooze) {
         PendingIntent screen = alarmScreen(context, s.id, session.occStart, session.occEnd, session.test);
@@ -115,9 +213,8 @@ public final class Notifications {
         NotificationCompat.Builder b = new NotificationCompat.Builder(context, CH_ALARM)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(s.displayTitle())
-                .setContentText(firstLine(s.body))
+                .setContentText(firstLine(s.body.isEmpty() ? s.quote : s.body))
                 .setSubText(when)
-                .setStyle(new NotificationCompat.BigTextStyle().bigText(s.body))
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
@@ -130,6 +227,7 @@ public final class Notifications {
                 .setFullScreenIntent(screen, true)
                 .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
                 .addAction(0, context.getString(R.string.action_stop), action(context, AlarmActionReceiver.ACTION_STOP, s.id));
+        applyStyle(context, b, s);
         if (canSnooze) {
             b.addAction(0, context.getString(R.string.action_snooze_n, s.snoozeMinutes),
                     action(context, AlarmActionReceiver.ACTION_SNOOZE, s.id));
@@ -197,6 +295,7 @@ public final class Notifications {
     }
 
     static void postMissed(Context context, Schedule s, long occStart) {
+        if (s.body == null) s.body = "";
         NotificationCompat.Builder b = new NotificationCompat.Builder(context, CH_STATUS)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(context.getString(R.string.notif_missed_title, s.displayTitle()))
@@ -214,11 +313,14 @@ public final class Notifications {
         nm.cancel(fallbackId(scheduleId));
     }
 
-    private static void notify(Context context, int id, Notification n) {
+    private static boolean notify(Context context, int id, Notification n) {
         try {
+            if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return false;
             NotificationManagerCompat.from(context).notify(id, n);
+            return true;
         } catch (SecurityException e) {
             // POST_NOTIFICATIONS denied; nothing else we can do here. The status page explains it.
+            return false;
         }
     }
 

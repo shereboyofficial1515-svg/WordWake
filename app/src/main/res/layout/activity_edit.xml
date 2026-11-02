@@ -1,27 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true">
+    android:fitsSystemWindows="true"
+    android:orientation="vertical">
 
-    <com.google.android.material.appbar.AppBarLayout
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            app:navigationContentDescription="@string/discard"
-            app:navigationIcon="?attr/homeAsUpIndicator" />
-    </com.google.android.material.appbar.AppBarLayout>
+        android:layout_height="?attr/actionBarSize"
+        app:navigationContentDescription="@string/discard"
+        app:navigationIcon="?attr/homeAsUpIndicator" />
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scroll"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -29,13 +24,27 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- ===== Message ===== -->
             <TextView
-                style="@style/SectionTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/section_message"
+                android:text="@string/label_type"
                 android:textAppearance="@style/SectionTitle" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/type_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:selectionRequired="true"
+                app:singleSelection="true">
+                    <com.google.android.material.chip.Chip android:id="@+id/type_reminder" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/type_reminder" />
+                    <com.google.android.material.chip.Chip android:id="@+id/type_alarm" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/type_alarm" />
+                    <com.google.android.material.chip.Chip android:id="@+id/type_task" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/type_task" />
+                    <com.google.android.material.chip.Chip android:id="@+id/type_appointment" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/type_appointment" />
+                    <com.google.android.material.chip.Chip android:id="@+id/type_deadline" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/type_deadline" />
+                    <com.google.android.material.chip.Chip android:id="@+id/type_tax" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/type_tax" />
+                    <com.google.android.material.chip.Chip android:id="@+id/type_bill" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/type_bill" />
+                    <com.google.android.material.chip.Chip android:id="@+id/type_quote" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/type_quote" />
+            </com.google.android.material.chip.ChipGroup>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
@@ -47,15 +56,20 @@
                     android:id="@+id/title_input"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="textCapSentences"
-                    android:maxLength="120" />
+                    android:inputType="textCapSentences" android:maxLength="120" />
             </com.google.android.material.textfield.TextInputLayout>
+
+            <LinearLayout android:id="@+id/category_row" style="@style/EditRow" android:layout_width="match_parent" android:layout_height="wrap_content">
+                <ImageView android:id="@+id/category_icon" android:layout_width="28dp" android:layout_height="28dp" android:layout_marginEnd="12dp" android:importantForAccessibility="no" />
+                <TextView style="@style/EditRowLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="12dp" android:text="@string/label_category" />
+                <TextView android:id="@+id/category_value" style="@style/EditRowValue" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="end" />
+            </LinearLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/body_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="4dp"
                 android:hint="@string/hint_body">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -64,64 +78,46 @@
                     android:layout_height="wrap_content"
                     android:gravity="top|start"
                     android:inputType="textMultiLine|textCapSentences"
-                    android:minLines="6"
+                    android:minLines="4"
                     android:scrollbars="vertical" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- ===== When ===== -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="20dp"
                 android:text="@string/section_when"
                 android:textAppearance="@style/SectionTitle" />
 
-            <com.google.android.material.button.MaterialButtonToggleGroup
+            <com.google.android.material.chip.ChipGroup
                 android:id="@+id/repeat_group"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
                 app:selectionRequired="true"
                 app:singleSelection="true">
-
-                <Button
-                    android:id="@+id/repeat_once"
-                    style="?attr/materialButtonOutlinedStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/repeat_once" />
-
-                <Button
-                    android:id="@+id/repeat_daily"
-                    style="?attr/materialButtonOutlinedStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/repeat_daily_short" />
-
-                <Button
-                    android:id="@+id/repeat_days"
-                    style="?attr/materialButtonOutlinedStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/repeat_days_short" />
-            </com.google.android.material.button.MaterialButtonToggleGroup>
+                    <com.google.android.material.chip.Chip android:id="@+id/repeat_once" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/repeat_once" />
+                    <com.google.android.material.chip.Chip android:id="@+id/repeat_daily" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/repeat_daily_short" />
+                    <com.google.android.material.chip.Chip android:id="@+id/repeat_days" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/repeat_days_short" />
+                    <com.google.android.material.chip.Chip android:id="@+id/repeat_weekly" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/repeat_weekly_short" />
+                    <com.google.android.material.chip.Chip android:id="@+id/repeat_monthly" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/repeat_monthly_short" />
+                    <com.google.android.material.chip.Chip android:id="@+id/repeat_yearly" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/repeat_yearly_short" />
+                    <com.google.android.material.chip.Chip android:id="@+id/repeat_custom" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/repeat_custom_short" />
+                    <com.google.android.material.chip.Chip android:id="@+id/repeat_deadline" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/repeat_deadline_short" />
+            </com.google.android.material.chip.ChipGroup>
 
             <LinearLayout
                 android:id="@+id/date_row"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="8dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
                 <TextView
+                    android:id="@+id/date_label"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="@string/label_date"
                     android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
 
                 <com.google.android.material.button.MaterialButton
@@ -132,58 +128,50 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/custom_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/dates_group"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/add_custom_date"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/add_date" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/days_row"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/label_days"
-                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+                android:layout_marginTop="8dp"
+                android:orientation="vertical"
+                android:visibility="gone">
 
                 <com.google.android.material.chip.ChipGroup
                     android:id="@+id/days_group"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp">
-
-                    <com.google.android.material.chip.Chip android:id="@+id/day_mon" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" />
-                    <com.google.android.material.chip.Chip android:id="@+id/day_tue" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" />
-                    <com.google.android.material.chip.Chip android:id="@+id/day_wed" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" />
-                    <com.google.android.material.chip.Chip android:id="@+id/day_thu" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" />
-                    <com.google.android.material.chip.Chip android:id="@+id/day_fri" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" />
-                    <com.google.android.material.chip.Chip android:id="@+id/day_sat" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" />
-                    <com.google.android.material.chip.Chip android:id="@+id/day_sun" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content">
+                        <com.google.android.material.chip.Chip android:id="@+id/day_mon" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                        <com.google.android.material.chip.Chip android:id="@+id/day_tue" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                        <com.google.android.material.chip.Chip android:id="@+id/day_wed" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                        <com.google.android.material.chip.Chip android:id="@+id/day_thu" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                        <com.google.android.material.chip.Chip android:id="@+id/day_fri" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                        <com.google.android.material.chip.Chip android:id="@+id/day_sat" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                        <com.google.android.material.chip.Chip android:id="@+id/day_sun" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" />
                 </com.google.android.material.chip.ChipGroup>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/days_weekdays"
-                        style="@style/Widget.Material3.Button.TextButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/days_weekdays" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/days_weekend"
-                        style="@style/Widget.Material3.Button.TextButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/days_weekend" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/days_all"
-                        style="@style/Widget.Material3.Button.TextButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/days_all" />
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                    <com.google.android.material.button.MaterialButton android:id="@+id/days_weekdays" style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="0dp" android:text="@string/days_weekdays" />
+                    <com.google.android.material.button.MaterialButton android:id="@+id/days_weekend" style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="0dp" android:text="@string/days_weekend" />
+                    <com.google.android.material.button.MaterialButton android:id="@+id/days_all" style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="0dp" android:text="@string/days_all" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -191,77 +179,37 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
+                android:baselineAligned="false"
                 android:orientation="horizontal">
 
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="8dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/label_start"
-                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/start_button"
-                        style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="64dp"
-                        android:textSize="20sp" />
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:id="@+id/start_label" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
+                    <com.google.android.material.button.MaterialButton android:id="@+id/start_button" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="match_parent" android:layout_height="60dp" android:textSize="19sp" />
                 </LinearLayout>
 
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/label_end"
-                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/end_button"
-                        style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="64dp"
-                        android:textSize="16sp" />
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_end" android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
+                    <com.google.android.material.button.MaterialButton android:id="@+id/end_button" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="match_parent" android:layout_height="60dp" android:textSize="15sp" />
                 </LinearLayout>
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="4dp"
-                    android:text="@string/label_quick_length"
-                    android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
-
-                <com.google.android.material.button.MaterialButton android:id="@+id/quick_15" style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="0dp" android:text="15m" />
-                <com.google.android.material.button.MaterialButton android:id="@+id/quick_30" style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="0dp" android:text="30m" />
-                <com.google.android.material.button.MaterialButton android:id="@+id/quick_60" style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="0dp" android:text="1h" />
-                <com.google.android.material.button.MaterialButton android:id="@+id/quick_120" style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="0dp" android:text="2h" />
-            </LinearLayout>
+            <HorizontalScrollView android:layout_width="match_parent" android:layout_height="wrap_content" android:scrollbars="none">
+                <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
+                    <com.google.android.material.button.MaterialButton android:id="@+id/quick_5" style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="0dp" android:text="@string/quick_5m" />
+                    <com.google.android.material.button.MaterialButton android:id="@+id/quick_10" style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="0dp" android:text="@string/quick_10m" />
+                    <com.google.android.material.button.MaterialButton android:id="@+id/quick_15" style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="0dp" android:text="@string/quick_15m" />
+                    <com.google.android.material.button.MaterialButton android:id="@+id/quick_30" style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="0dp" android:text="@string/quick_30m" />
+                    <com.google.android.material.button.MaterialButton android:id="@+id/quick_60" style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="0dp" android:text="@string/quick_1h" />
+                    <com.google.android.material.button.MaterialButton android:id="@+id/quick_120" style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="0dp" android:text="@string/quick_2h" />
+                    <com.google.android.material.button.MaterialButton android:id="@+id/quick_custom" style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="0dp" android:text="@string/quick_custom" />
+                </LinearLayout>
+            </HorizontalScrollView>
 
             <TextView
                 android:id="@+id/window_summary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:background="@drawable/bg_chip_ok"
-                android:backgroundTint="?attr/colorSurfaceVariant"
+                android:background="@drawable/bg_summary"
                 android:lineSpacingExtra="2dp"
                 android:padding="12dp"
                 android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
@@ -269,7 +217,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="14dp"
                 android:text="@string/label_style"
                 android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
 
@@ -281,125 +229,428 @@
                 app:selectionRequired="true"
                 app:singleSelection="true">
 
-                <Button
-                    android:id="@+id/style_continuous"
-                    style="?attr/materialButtonOutlinedStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/style_continuous_short" />
-
-                <Button
-                    android:id="@+id/style_reminders"
-                    style="?attr/materialButtonOutlinedStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/style_reminders_short" />
+                <Button android:id="@+id/style_continuous" style="?attr/materialButtonOutlinedStyle" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/style_continuous_short" />
+                <Button android:id="@+id/style_reminders" style="?attr/materialButtonOutlinedStyle" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/style_reminders_short" />
             </com.google.android.material.button.MaterialButtonToggleGroup>
-
-            <LinearLayout
-                android:id="@+id/reminder_row"
-                style="@style/EditRow"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <TextView style="@style/EditRowLabel" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/reminder_every" />
-                <TextView android:id="@+id/reminder_value" style="@style/EditRowValue" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            <LinearLayout android:id="@+id/reminder_row" style="@style/EditRow" android:layout_width="match_parent" android:layout_height="wrap_content">
+                <TextView style="@style/EditRowLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="12dp" android:text="@string/reminder_every" />
+                <TextView android:id="@+id/reminder_value" style="@style/EditRowValue" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="end" />
             </LinearLayout>
 
-            <!-- ===== Sound ===== -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="@string/section_sound"
-                android:textAppearance="@style/SectionTitle" />
-
             <LinearLayout
+                android:id="@+id/finance_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:text="@string/section_finance" android:textAppearance="@style/SectionTitle" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/finance_note" android:textAppearance="@style/TextAppearance.Material3.BodySmall" android:textColor="@color/text_secondary" />
+
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
+                android:hint="@string/finance_type">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/fin_type"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textCapSentences"  />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/finance_jurisdiction">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/fin_jurisdiction"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textCapSentences"  />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/finance_authority">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/fin_authority"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textCapSentences"  />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/finance_year">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/fin_year"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textCapSentences"  />
+            </com.google.android.material.textfield.TextInputLayout>
+
+                <LinearLayout style="@style/EditRow" android:layout_width="match_parent" android:layout_height="wrap_content">
+                    <TextView style="@style/EditRowLabel" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/finance_filing" />
+                    <com.google.android.material.button.MaterialButton android:id="@+id/fin_filing" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                </LinearLayout>
+                <LinearLayout style="@style/EditRow" android:layout_width="match_parent" android:layout_height="wrap_content">
+                    <TextView style="@style/EditRowLabel" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/finance_payment" />
+                    <com.google.android.material.button.MaterialButton android:id="@+id/fin_payment" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                </LinearLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/finance_amount">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/fin_amount"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textCapSentences"  />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/finance_contact">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/fin_contact"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textCapSentences"  />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/finance_website">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/fin_website"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textUri"  />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/finance_documents">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/fin_documents"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textCapSentences|textMultiLine"  />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/head_plan"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="?attr/selectableItemBackground"
                 android:gravity="center_vertical"
+                android:minHeight="48dp"
                 android:orientation="horizontal">
 
                 <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="12dp"
-                    android:text="@string/label_sound"
-                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/sound_button"
-                    style="@style/Widget.Material3.Button.TonalButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    app:icon="@drawable/ic_music" />
+                    android:text="@string/section_plan"
+                    android:textAppearance="@style/SectionTitle" />
+
+                <ImageView
+                    android:id="@+id/chev_plan"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_expand" />
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/sound_warning"
+                android:id="@+id/body_plan"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" android:visibility="gone">
+
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/plan_hint" android:textAppearance="@style/TextAppearance.Material3.BodySmall" android:textColor="@color/text_secondary" />
+            <LinearLayout android:id="@+id/steps_box" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                    <com.google.android.material.button.MaterialButton android:id="@+id/add_step" style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="0dp" android:text="@string/plan_add" />
+                    <com.google.android.material.button.MaterialButton android:id="@+id/use_tax_steps" style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="0dp" android:text="@string/plan_use_tax" />
+            </LinearLayout>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/head_deadline"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="?attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:minHeight="48dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/section_deadline"
+                    android:textAppearance="@style/SectionTitle" />
+
+                <ImageView
+                    android:id="@+id/chev_deadline"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_expand" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/body_deadline"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" android:visibility="gone">
+            <LinearLayout style="@style/EditRow" android:layout_width="match_parent" android:layout_height="wrap_content">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                    <TextView style="@style/EditRowLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/deadline_enable" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/deadline_enable_summary" android:textAppearance="@style/TextAppearance.Material3.BodySmall" android:textColor="@color/text_secondary" />
+                </LinearLayout>
+                <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/deadline_switch" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/deadline_box"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                    <com.google.android.material.button.MaterialButton android:id="@+id/deadline_date" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:layout_weight="1" />
+                    <com.google.android.material.button.MaterialButton android:id="@+id/deadline_time" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" />
+                </LinearLayout>
+
+                <TextView android:id="@+id/deadline_summary" android:layout_width="match_parent" android:layout_height="wrap_content" android:textAppearance="@style/TextAppearance.Material3.BodyMedium" android:textColor="@color/text_secondary" />
+
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:background="@drawable/bg_chip_warn"
-                android:orientation="vertical"
-                android:padding="12dp"
-                android:visibility="gone">
+                android:hint="@string/lead_hint">
 
-                <TextView
-                    android:id="@+id/sound_warning_text"
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/lead_input"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textAppearance="@style/TextAppearance.Material3.BodySmall"
-                    android:textColor="@color/warn_text" />
+                    android:digits="0123456789," android:inputType="text"  />
+            </com.google.android.material.textfield.TextInputLayout>
+            <LinearLayout style="@style/EditRow" android:layout_width="match_parent" android:layout_height="wrap_content">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                    <TextView style="@style/EditRowLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/follow_up" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/follow_up_summary" android:textAppearance="@style/TextAppearance.Material3.BodySmall" android:textColor="@color/text_secondary" />
+                </LinearLayout>
+                <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/follow_up_switch" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            </LinearLayout>
+            <LinearLayout style="@style/EditRow" android:layout_width="match_parent" android:layout_height="wrap_content">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                    <TextView style="@style/EditRowLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/overdue_daily" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/overdue_daily_summary" android:textAppearance="@style/TextAppearance.Material3.BodySmall" android:textColor="@color/text_secondary" />
+                </LinearLayout>
+                <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/overdue_switch" android:layout_width="wrap_content" android:layout_height="wrap_content" />
             </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="@string/label_volume"
-                android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+            </LinearLayout>
+            <LinearLayout android:id="@+id/status_row" style="@style/EditRow" android:layout_width="match_parent" android:layout_height="wrap_content">
+                <TextView style="@style/EditRowLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="12dp" android:text="@string/label_status" />
+                <TextView android:id="@+id/status_value" style="@style/EditRowValue" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="end" />
+            </LinearLayout>
 
-            <com.google.android.material.slider.Slider
-                android:id="@+id/volume_slider"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:stepSize="10"
-                android:valueFrom="10"
-                android:valueTo="100" />
+            </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/volume_warning"
+                android:id="@+id/head_quote"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_chip_warn"
+                android:layout_marginTop="16dp"
+                android:background="?attr/selectableItemBackground"
                 android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingStart="12dp"
-                android:visibility="gone">
+                android:minHeight="48dp"
+                android:orientation="horizontal">
 
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="@string/volume_low_warning"
-                    android:textAppearance="@style/TextAppearance.Material3.BodySmall"
-                    android:textColor="@color/warn_text" />
+                    android:text="@string/section_quote"
+                    android:textAppearance="@style/SectionTitle" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/volume_settings"
-                    style="@style/Widget.Material3.Button.TextButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/open_sound_settings" />
+                <ImageView
+                    android:id="@+id/chev_quote"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_expand" />
             </LinearLayout>
 
+            <LinearLayout
+                android:id="@+id/body_quote"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" android:visibility="gone">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/quote_hint">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/quote_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textCapSentences|textMultiLine" android:maxLength="1000" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                    <com.google.android.material.button.MaterialButton android:id="@+id/pick_quote" style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="0dp" android:text="@string/quote_pick" />
+            </LinearLayout>
+            <LinearLayout style="@style/EditRow" android:layout_width="match_parent" android:layout_height="wrap_content">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                    <TextView style="@style/EditRowLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/quote_random" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/quote_random_summary" android:textAppearance="@style/TextAppearance.Material3.BodySmall" android:textColor="@color/text_secondary" />
+                </LinearLayout>
+                <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/quote_random_switch" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/head_attach"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="?attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:minHeight="48dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/section_attachments"
+                    android:textAppearance="@style/SectionTitle" />
+
+                <ImageView
+                    android:id="@+id/chev_attach"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_expand" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/body_attach"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" android:visibility="gone">
+
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/attach_hint" android:textAppearance="@style/TextAppearance.Material3.BodySmall" android:textColor="@color/text_secondary" />
+            <LinearLayout android:id="@+id/attachments_box" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                    <com.google.android.material.button.MaterialButton android:id="@+id/add_gallery" style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="0dp" android:text="@string/attach_gallery" />
+                    <com.google.android.material.button.MaterialButton android:id="@+id/add_camera" style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="0dp" android:text="@string/attach_camera" />
+                    <com.google.android.material.button.MaterialButton android:id="@+id/add_document" style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="0dp" android:text="@string/attach_document" />
+            </LinearLayout>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/head_sound"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="?attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:minHeight="48dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/section_alert"
+                    android:textAppearance="@style/SectionTitle" />
+
+                <ImageView
+                    android:id="@+id/chev_sound"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_expand" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/body_sound"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/alert_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:selectionRequired="true"
+                app:singleSelection="true">
+
+                <Button android:id="@+id/alert_alarm" style="?attr/materialButtonOutlinedStyle" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/alert_alarm" />
+                <Button android:id="@+id/alert_notification" style="?attr/materialButtonOutlinedStyle" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/alert_notification" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <LinearLayout
+                android:id="@+id/alarm_sound_box"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:gravity="center_vertical" android:orientation="horizontal">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="12dp" android:text="@string/label_sound" android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+                    <com.google.android.material.button.MaterialButton android:id="@+id/sound_button" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:ellipsize="end" android:maxLines="1" app:icon="@drawable/ic_music" />
+                </LinearLayout>
+
+                <LinearLayout android:id="@+id/sound_warning" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:background="@drawable/bg_chip_warn" android:orientation="vertical" android:padding="12dp" android:visibility="gone">
+                    <TextView android:id="@+id/sound_warning_text" android:layout_width="match_parent" android:layout_height="wrap_content" android:textAppearance="@style/TextAppearance.Material3.BodySmall" android:textColor="@color/warn_text" />
+                </LinearLayout>
+
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="@string/label_volume" android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+                <com.google.android.material.slider.Slider android:id="@+id/volume_slider" android:layout_width="match_parent" android:layout_height="wrap_content" android:stepSize="10" android:valueFrom="10" android:valueTo="100" />
+
+                <LinearLayout android:id="@+id/volume_warning" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_chip_warn" android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="12dp" android:paddingEnd="4dp" android:visibility="gone">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/volume_low_warning" android:textAppearance="@style/TextAppearance.Material3.BodySmall" android:textColor="@color/warn_text" />
+                    <com.google.android.material.button.MaterialButton android:id="@+id/volume_settings" style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/open_sound_settings" />
+                </LinearLayout>
             <LinearLayout style="@style/EditRow" android:layout_width="match_parent" android:layout_height="wrap_content">
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
                     <TextView style="@style/EditRowLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_loop" />
@@ -407,30 +658,55 @@
                 </LinearLayout>
                 <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/loop_switch" android:layout_width="wrap_content" android:layout_height="wrap_content" />
             </LinearLayout>
-
             <LinearLayout android:id="@+id/sound_duration_row" style="@style/EditRow" android:layout_width="match_parent" android:layout_height="wrap_content">
-                <TextView style="@style/EditRowLabel" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/label_sound_duration" />
-                <TextView android:id="@+id/sound_duration_value" style="@style/EditRowValue" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                <TextView style="@style/EditRowLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="12dp" android:text="@string/label_sound_duration" />
+                <TextView android:id="@+id/sound_duration_value" style="@style/EditRowValue" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="end" />
             </LinearLayout>
-
             <LinearLayout style="@style/EditRow" android:layout_width="match_parent" android:layout_height="wrap_content">
-                <TextView style="@style/EditRowLabel" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/label_vibrate" />
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                    <TextView style="@style/EditRowLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_vibrate" />
+                </LinearLayout>
                 <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/vibrate_switch" android:layout_width="wrap_content" android:layout_height="wrap_content" />
             </LinearLayout>
 
-            <!-- ===== Options ===== -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="@string/section_options"
-                android:textAppearance="@style/SectionTitle" />
-
-            <LinearLayout android:id="@+id/snooze_row" style="@style/EditRow" android:layout_width="match_parent" android:layout_height="wrap_content">
-                <TextView style="@style/EditRowLabel" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/label_snooze" />
-                <TextView android:id="@+id/snooze_value" style="@style/EditRowValue" android:layout_width="wrap_content" android:layout_height="wrap_content" />
             </LinearLayout>
 
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/head_options"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="?attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:minHeight="48dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/section_options"
+                    android:textAppearance="@style/SectionTitle" />
+
+                <ImageView
+                    android:id="@+id/chev_options"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_expand" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/body_options"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" android:visibility="gone">
+            <LinearLayout android:id="@+id/snooze_row" style="@style/EditRow" android:layout_width="match_parent" android:layout_height="wrap_content">
+                <TextView style="@style/EditRowLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="12dp" android:text="@string/label_snooze" />
+                <TextView android:id="@+id/snooze_value" style="@style/EditRowValue" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="end" />
+            </LinearLayout>
             <LinearLayout style="@style/EditRow" android:layout_width="match_parent" android:layout_height="wrap_content">
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
                     <TextView style="@style/EditRowLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_auto_dismiss" />
@@ -438,15 +714,17 @@
                 </LinearLayout>
                 <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/auto_dismiss_switch" android:layout_width="wrap_content" android:layout_height="wrap_content" />
             </LinearLayout>
-
             <LinearLayout android:id="@+id/zone_row" style="@style/EditRow" android:layout_width="match_parent" android:layout_height="wrap_content">
                 <TextView style="@style/EditRowLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="12dp" android:text="@string/label_zone" />
                 <TextView android:id="@+id/zone_value" style="@style/EditRowValue" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="end" />
             </LinearLayout>
-
             <LinearLayout style="@style/EditRow" android:layout_width="match_parent" android:layout_height="wrap_content">
-                <TextView style="@style/EditRowLabel" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/label_enabled" />
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                    <TextView style="@style/EditRowLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_enabled" />
+                </LinearLayout>
                 <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/enabled_switch" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            </LinearLayout>
+
             </LinearLayout>
 
             <TextView
@@ -471,4 +749,4 @@
                 android:textSize="17sp" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</LinearLayout>

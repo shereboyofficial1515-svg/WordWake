@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.wordwake.app.data.AppExecutors;
+import com.wordwake.app.data.DiagLog;
+import com.wordwake.app.data.ScheduleRepository;
 
 /**
  * Re-registers alarms after events that clear or invalidate them: reboot, app update, manual
@@ -21,6 +23,13 @@ public class SystemEventReceiver extends BroadcastReceiver {
         AppExecutors.io(() -> {
             try {
                 AlarmScheduler.reconcileAll(app, reason);
+                if (reason.contains("BOOT") || reason.contains("QUICKBOOT")) {
+                    int restored = 0;
+                    for (com.wordwake.app.model.Schedule s : new ScheduleRepository(app).getAll()) {
+                        if (s.enabled && AlarmScheduler.isRegistered(app, s.id)) restored++;
+                    }
+                    DiagLog.log(app, DiagLog.REBOOT_RECOVERY, 0, "trigger=" + reason + " restored=" + restored);
+                }
             } finally {
                 result.finish();
             }

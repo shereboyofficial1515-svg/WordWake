@@ -29,4 +29,17 @@
     <color name="alarm_card">#24226B</color>
     <color name="alarm_accent">#FFB547</color>
     <color name="ic_launcher_background">#3B3A98</color>
+    <color name="card_stroke">#E4E2EC</color>
+    <color name="summary_bg">#F1F0F8</color>
+    <color name="cat_personal">#3B3A98</color>
+    <color name="cat_business">#1565C0</color>
+    <color name="cat_finance">#2E7D32</color>
+    <color name="cat_tax">#AD1457</color>
+    <color name="cat_appointments">#00796B</color>
+    <color name="cat_education">#6A1B9A</color>
+    <color name="cat_health">#C62828</color>
+    <color name="cat_travel">#0277BD</color>
+    <color name="cat_bills">#B45309</color>
+    <color name="cat_documents">#455A64</color>
+    <color name="cat_motivation">#C77700</color>
 </resources>

@@ -22,6 +22,8 @@ import com.wordwake.app.sound.AlarmPlayer;
 /** Reads the current state of every permission/setting that affects alarm delivery. */
 public final class PermissionStatus {
 
+    private static final long RECENT_MS = 7L * 24 * 60 * 60 * 1000;
+
     private PermissionStatus() {}
 
     public static boolean notificationsAllowed(Context c) {
@@ -74,6 +76,30 @@ public final class PermissionStatus {
     /** True when battery optimisation is likely to block alarms on this phone. */
     public static boolean batteryBlocksAlarms(Context c) {
         return aggressiveOem() && !ignoringBatteryOptimizations(c);
+    }
+
+    /**
+     * Evidence that alerts are not reaching the user: the last alert was missed or more than a
+     * minute late, or the last system test failed. Does disk I/O, so call it in the background.
+     */
+    public static boolean deliveryProblem(Context c) {
+        com.wordwake.app.data.AppSettings st = new com.wordwake.app.data.AppSettings(c);
+        long now = System.currentTimeMillis();
+        long expected = st.testExpectedAt();
+        if (expected > 0 && now - expected < RECENT_MS) {
+            long fired = st.testFiredAt();
+            if (fired == 0 && now > expected + 60_000L) return true;
+            if (fired - expected > 60_000L) return true;
+        }
+        com.wordwake.app.data.DiagLog.Entry missed = com.wordwake.app.data.DiagLog.last(c, com.wordwake.app.data.DiagLog.MISSED);
+        com.wordwake.app.data.DiagLog.Entry rang = com.wordwake.app.data.DiagLog.last(c, com.wordwake.app.data.DiagLog.TRIGGERED);
+        if (rang != null && now - rang.at < RECENT_MS && delayOf(rang) > 60_000L && (missed == null || rang.at > missed.at)) return true;
+        return missed != null && now - missed.at < RECENT_MS && (rang == null || rang.at < missed.at);
+    }
+
+    private static long delayOf(com.wordwake.app.data.DiagLog.Entry e) {
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("delayMs=(\\d+)").matcher(e.detail);
+        return m.find() ? Long.parseLong(m.group(1)) : 0;
     }
 
     public static boolean powerSaveOn(Context c) {

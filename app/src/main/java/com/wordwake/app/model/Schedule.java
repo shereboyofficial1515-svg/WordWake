@@ -3,9 +3,12 @@ package com.wordwake.app.model;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
- * A scheduled message plus its runtime alarm state.
+ * A scheduled reminder plus its runtime alarm state.
  *
  * Times are stored as minute-of-day in the schedule's time zone. The alert window starts at
  * {@link #startMinute} and ends at {@link #endMinute}; when the end minute is less than or equal
@@ -16,6 +19,32 @@ public final class Schedule {
     public static final int REPEAT_ONCE = 0;
     public static final int REPEAT_DAILY = 1;
     public static final int REPEAT_DAYS = 2;
+    public static final int REPEAT_WEEKLY = 3;
+    public static final int REPEAT_MONTHLY = 4;
+    public static final int REPEAT_YEARLY = 5;
+    public static final int REPEAT_CUSTOM_DATES = 6;
+    /** Alerts are derived from {@link #deadlineAt}: lead days and optional daily follow-ups. */
+    public static final int REPEAT_DEADLINE = 7;
+
+    public static final int TYPE_ALARM = 0;
+    public static final int TYPE_REMINDER = 1;
+    public static final int TYPE_TASK = 2;
+    public static final int TYPE_APPOINTMENT = 3;
+    public static final int TYPE_DEADLINE = 4;
+    public static final int TYPE_TAX = 5;
+    public static final int TYPE_BILL = 6;
+    public static final int TYPE_QUOTE = 7;
+
+    /** Sound, vibration and full-screen display. */
+    public static final int ALERT_ALARM = 0;
+    /** An ordinary high-priority notification. */
+    public static final int ALERT_NOTIFICATION = 1;
+
+    public static final int STATUS_NOT_STARTED = 0;
+    public static final int STATUS_IN_PROGRESS = 1;
+    public static final int STATUS_WAITING = 2;
+    public static final int STATUS_READY = 3;
+    public static final int STATUS_COMPLETED = 4;
 
     /** Bit for Monday; Tuesday is MONDAY << 1, ... Sunday is MONDAY << 6. */
     public static final int DAY_MONDAY = 1;
@@ -28,16 +57,23 @@ public final class Schedule {
     public static final int OUTCOME_COMPLETED = 3;
     public static final int OUTCOME_ENDED = 4;
 
+    public static final String DEFAULT_LEAD_DAYS = "30,14,7,3,0";
+
     // ---- user-editable fields ----
     public long id;
     public String title = "";
     public String body = "";
+    public int type = TYPE_ALARM;
+    public int alertMode = ALERT_ALARM;
+    public String categoryKey = Category.KEY_PERSONAL;
     public int repeatMode = REPEAT_DAILY;
-    /** Epoch day of the one-time alert date (used by REPEAT_ONCE only). */
+    /** Epoch day: the date of a one-time alert, or the anchor/first date of other modes. */
     public long startDate;
     public int startMinute = 6 * 60;
     public int endMinute = 6 * 60 + 30;
     public int daysMask = ALL_DAYS;
+    /** Comma-separated epoch days for {@link #REPEAT_CUSTOM_DATES}. */
+    public String customDates = "";
     /** Empty means "follow the device time zone". */
     public String zoneId = "";
     /** 0 = ring once continuously; > 0 = repeat a reminder every N minutes inside the window. */
@@ -55,6 +91,21 @@ public final class Schedule {
     /** Close the message screen/notification automatically at the end time. */
     public boolean autoDismiss = true;
     public boolean enabled = true;
+    public String quote = "";
+    /** Show a random saved quote instead of {@link #quote}. */
+    public boolean quoteRandom;
+    /** Epoch ms of the deadline; 0 = none. Independent of the alert window. */
+    public long deadlineAt;
+    /** Days before the deadline to alert, comma separated; 0 means on the deadline day. */
+    public String leadDays = "";
+    /** Alert every day from {@link #startDate} until the deadline or completion. */
+    public boolean followUpDaily;
+    /** Keep alerting every day after the deadline until the task is completed. */
+    public boolean overdueDaily;
+    public int status = STATUS_NOT_STARTED;
+    public long completedAt;
+    /** Tax/bill details as JSON; see {@link Finance}. */
+    public String financeJson = "";
     public long createdAt;
     public long updatedAt;
 
@@ -101,6 +152,63 @@ public final class Schedule {
         return DAY_MONDAY << (day.getValue() - 1);
     }
 
+    public boolean isCompleted() {
+        return status == STATUS_COMPLETED;
+    }
+
+    /** True for modes with a limited set of dates, which finish when the dates run out. */
+    public boolean isFiniteRepeat() {
+        return repeatMode == REPEAT_ONCE || repeatMode == REPEAT_CUSTOM_DATES || repeatMode == REPEAT_DEADLINE;
+    }
+
+    /** True for types tracked as work to finish (the rest simply ring). */
+    public boolean isTracked() {
+        return type == TYPE_TASK || type == TYPE_DEADLINE || type == TYPE_TAX || type == TYPE_BILL
+                || type == TYPE_APPOINTMENT || deadlineAt > 0;
+    }
+
+    public List<LocalDate> customDateList() {
+        return parseDates(customDates);
+    }
+
+    public static List<LocalDate> parseDates(String csv) {
+        List<LocalDate> out = new ArrayList<>();
+        if (csv == null || csv.trim().isEmpty()) return out;
+        for (String p : csv.split(",")) {
+            try {
+                out.add(LocalDate.ofEpochDay(Long.parseLong(p.trim())));
+            } catch (NumberFormatException ignored) {
+                // Skip a damaged entry and keep the rest.
+            }
+        }
+        Collections.sort(out);
+        return out;
+    }
+
+    public static String formatDates(List<LocalDate> dates) {
+        StringBuilder sb = new StringBuilder();
+        for (LocalDate d : dates) {
+            if (sb.length() > 0) sb.append(',');
+            sb.append(d.toEpochDay());
+        }
+        return sb.toString();
+    }
+
+    public List<Integer> leadDayList() {
+        List<Integer> out = new ArrayList<>();
+        if (leadDays == null || leadDays.trim().isEmpty()) return out;
+        for (String p : leadDays.split(",")) {
+            try {
+                int v = Integer.parseInt(p.trim());
+                if (v >= 0 && !out.contains(v)) out.add(v);
+            } catch (NumberFormatException ignored) {
+                // Skip a damaged entry and keep the rest.
+            }
+        }
+        Collections.sort(out, Collections.reverseOrder());
+        return out;
+    }
+
     /** Clears per-occurrence runtime state, e.g. after the schedule is edited. */
     public void resetRuntimeState() {
         occStart = 0;
@@ -118,11 +226,15 @@ public final class Schedule {
         s.id = id;
         s.title = title;
         s.body = body;
+        s.type = type;
+        s.alertMode = alertMode;
+        s.categoryKey = categoryKey;
         s.repeatMode = repeatMode;
         s.startDate = startDate;
         s.startMinute = startMinute;
         s.endMinute = endMinute;
         s.daysMask = daysMask;
+        s.customDates = customDates;
         s.zoneId = zoneId;
         s.reminderMinutes = reminderMinutes;
         s.soundUri = soundUri;
@@ -134,6 +246,15 @@ public final class Schedule {
         s.snoozeMinutes = snoozeMinutes;
         s.autoDismiss = autoDismiss;
         s.enabled = enabled;
+        s.quote = quote;
+        s.quoteRandom = quoteRandom;
+        s.deadlineAt = deadlineAt;
+        s.leadDays = leadDays;
+        s.followUpDaily = followUpDaily;
+        s.overdueDaily = overdueDaily;
+        s.status = status;
+        s.completedAt = completedAt;
+        s.financeJson = financeJson;
         s.createdAt = createdAt;
         s.updatedAt = updatedAt;
         s.occStart = occStart;
@@ -150,6 +271,7 @@ public final class Schedule {
     public String displayTitle() {
         if (title != null && !title.trim().isEmpty()) return title.trim();
         String b = body == null ? "" : body.trim();
+        if (b.isEmpty() && quote != null) b = quote.trim();
         int nl = b.indexOf('\n');
         if (nl > 0) b = b.substring(0, nl);
         return b.length() > 40 ? b.substring(0, 40) + "…" : b;

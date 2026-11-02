@@ -21,4 +21,17 @@
     <color name="ok_text">#9BE0AE</color>
     <color name="warn_container">#4A2600</color>
     <color name="warn_text">#FFB77C</color>
+    <color name="card_stroke">#34343E</color>
+    <color name="summary_bg">#25252E</color>
+    <color name="cat_personal">#C2C1FF</color>
+    <color name="cat_business">#90CAF9</color>
+    <color name="cat_finance">#A5D6A7</color>
+    <color name="cat_tax">#F48FB1</color>
+    <color name="cat_appointments">#80CBC4</color>
+    <color name="cat_education">#CE93D8</color>
+    <color name="cat_health">#EF9A9A</color>
+    <color name="cat_travel">#81D4FA</color>
+    <color name="cat_bills">#FFCC80</color>
+    <color name="cat_documents">#B0BEC5</color>
+    <color name="cat_motivation">#FFD54F</color>
 </resources>

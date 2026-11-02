@@ -18,10 +18,19 @@ public final class AppSettings {
     public static final int TEXT_HUGE = 2;
 
     private static final String FILE = "wordwake_settings";
+    private static volatile boolean moved;
     private final SharedPreferences p;
 
     public AppSettings(Context context) {
-        p = context.getApplicationContext().getSharedPreferences(FILE, Context.MODE_PRIVATE);
+        Context app = context.getApplicationContext();
+        // Device-protected, like the database, so alarm settings are readable before first unlock.
+        Context dp = app.createDeviceProtectedStorageContext();
+        // The old location is only readable once the phone has been unlocked.
+        android.os.UserManager um = app.getSystemService(android.os.UserManager.class);
+        if (!moved && (um == null || um.isUserUnlocked())) {
+            moved = dp.moveSharedPreferencesFrom(app, FILE);
+        }
+        p = dp.getSharedPreferences(FILE, Context.MODE_PRIVATE);
     }
 
     public boolean onboardingDone() { return p.getBoolean("onboarding_done", false); }
@@ -53,6 +62,44 @@ public final class AppSettings {
 
     public boolean keepScreenOn() { return p.getBoolean("keep_screen_on", true); }
     public void setKeepScreenOn(boolean v) { p.edit().putBoolean("keep_screen_on", v).apply(); }
+
+    /** Reliable delivery: on by default only where the phone's power manager withholds alarms. */
+    public boolean reliableDelivery(boolean defaultValue) { return p.getBoolean("reliable_delivery", defaultValue); }
+    public void setReliableDelivery(boolean v) { p.edit().putBoolean("reliable_delivery", v).apply(); }
+
+    /** Sound chosen for a category; returns {uri, name} or null. */
+    public String[] categorySound(String key) {
+        String uri = p.getString("catsound_uri_" + key, null);
+        return uri == null ? null : new String[]{uri, p.getString("catsound_name_" + key, "")};
+    }
+    public void setCategorySound(String key, String uri, String name) {
+        p.edit().putString("catsound_uri_" + key, uri).putString("catsound_name_" + key, name).apply();
+    }
+
+    public long lastExitLogged() { return p.getLong("last_exit", 0); }
+    public void setLastExitLogged(long v) { p.edit().putLong("last_exit", v).apply(); }
+
+    public boolean quotesSeeded() { return p.getBoolean("quotes_seeded", false); }
+    public void setQuotesSeeded() { p.edit().putBoolean("quotes_seeded", true).apply(); }
+
+    // Results of the last RUN ALARM SYSTEM TEST, kept so a failed delivery is still reported later.
+    public long testExpectedAt() { return p.getLong("test_expected", 0); }
+    public long testFiredAt() { return p.getLong("test_fired", 0); }
+    public long testServiceAt() { return p.getLong("test_service", 0); }
+    public boolean testNotificationPosted() { return p.getBoolean("test_notif", false); }
+    public int testAudio() { return p.getInt("test_audio", 0); }
+    public boolean testScreenWasOff() { return p.getBoolean("test_screen_off", false); }
+    public void startTest(long expectedAt) {
+        p.edit().putLong("test_expected", expectedAt).putLong("test_fired", 0).putLong("test_service", 0)
+                .putBoolean("test_notif", false).putInt("test_audio", 0).putBoolean("test_screen_off", false).apply();
+    }
+    public void recordTestFired(long at, boolean screenOff) {
+        p.edit().putLong("test_fired", at).putBoolean("test_screen_off", screenOff).apply();
+    }
+    public void recordTestService(long at, boolean notificationPosted) {
+        p.edit().putLong("test_service", at).putBoolean("test_notif", notificationPosted).apply();
+    }
+    public void recordTestAudio(int result) { p.edit().putInt("test_audio", result).apply(); }
 
     /** Whether we already asked for POST_NOTIFICATIONS once (so we never nag). */
     public boolean notificationPermissionAsked() { return p.getBoolean("notif_asked", false); }

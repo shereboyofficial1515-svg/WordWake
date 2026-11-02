@@ -23,7 +23,8 @@ import androidx.core.content.ContextCompat;
 import com.wordwake.app.R;
 import com.wordwake.app.WordWakeApp;
 import com.wordwake.app.data.AppExecutors;
-import com.wordwake.app.data.ScheduleRepository;
+import com.wordwake.app.data.AppSettings;
+import com.wordwake.app.data.DiagLog;
 import com.wordwake.app.engine.ScheduleEngine;
 import com.wordwake.app.model.Schedule;
 import com.wordwake.app.sound.AlarmPlayer;
@@ -51,6 +52,7 @@ public class AlarmService extends Service {
     private Vibrator vibrator;
     private PowerManager.WakeLock wakeLock;
     private ActiveAlarm.Session session;
+    private String scheduleTitle = "";
 
     static boolean start(Context context, long id, long occStart, long occEnd, long ringAt,
                          long sessionEnd, long soundEnd, int kind, boolean test) {
@@ -103,7 +105,7 @@ public class AlarmService extends Service {
         boolean test = intent.getBooleanExtra(X_TEST, false);
         long now = System.currentTimeMillis();
         long sessionEnd = intent.getLongExtra(X_SESSION_END, 0);
-        Schedule s = new ScheduleRepository(this).get(id);
+        Schedule s = AlarmController.load(this, id);
 
         boolean stale = s == null || sessionEnd <= now || (!test && s.ringActiveUntil <= now);
         if (stale) {
@@ -115,6 +117,7 @@ public class AlarmService extends Service {
         }
 
         ActiveAlarm.Session previous = session;
+        final boolean systemTest = id == SystemTest.SCHEDULE_ID;
         ActiveAlarm.Session next = new ActiveAlarm.Session(id,
                 intent.getLongExtra(X_OCC_START, now), intent.getLongExtra(X_OCC_END, sessionEnd),
                 intent.getLongExtra(X_RING_AT, now), sessionEnd,
@@ -138,11 +141,23 @@ public class AlarmService extends Service {
         }
 
         session = next;
+        scheduleTitle = s.displayTitle();
+        final long serviceStartedAt = System.currentTimeMillis();
+        if (systemTest) new AppSettings(this).recordTestService(serviceStartedAt, false);
+        handler.postDelayed(() -> {
+            boolean shown = isNotificationShown();
+            DiagLog.log(this, shown ? DiagLog.NOTIFICATION_POSTED : DiagLog.PERMISSION_FAILURE, id,
+                    shown ? "channel=alarm" : "alarm notification not shown; check notification permission");
+            if (systemTest) new AppSettings(this).recordTestService(serviceStartedAt, shown);
+        }, 1500);
         acquireWakeLock(sessionEnd - now + 30_000L);
         int result = player.start(s.soundUri, s.loopSound, s.volumePercent,
                 () -> handler.post(this::onSoundFinished));
         next.fallbackSound = result == AlarmPlayer.RESULT_FALLBACK;
         next.soundFailed = result == AlarmPlayer.RESULT_FAILED;
+        DiagLog.log(this, next.soundFailed ? DiagLog.SCHEDULE_FAILURE : DiagLog.AUDIO_STARTED, id,
+                next.soundFailed ? "no playable sound" : next.fallbackSound ? "sound=fallback" : "sound=selected");
+        if (systemTest) handler.postDelayed(this::verifyTestAudio, 2000);
         if (s.vibrate) startVibration();
         ActiveAlarm.set(next);
 
@@ -165,6 +180,23 @@ public class AlarmService extends Service {
             }
         }
         return START_REDELIVER_INTENT;
+    }
+
+    /** Checks the player is really running. It cannot tell whether a person could hear it. */
+    private void verifyTestAudio() {
+        int before = player.positionMs();
+        handler.postDelayed(() -> new AppSettings(this).recordTestAudio(
+                player.isPlaying() && player.positionMs() != before
+                        ? SystemTest.AUDIO_ENGINE_RUNNING : SystemTest.AUDIO_NOT_RUNNING), 500);
+    }
+
+    private boolean isNotificationShown() {
+        android.app.NotificationManager nm = getSystemService(android.app.NotificationManager.class);
+        if (nm == null) return false;
+        for (android.service.notification.StatusBarNotification n : nm.getActiveNotifications()) {
+            if (n.getId() == Notifications.ID_RINGING) return true;
+        }
+        return false;
     }
 
     private void onSoundFinished() {
@@ -247,7 +279,10 @@ public class AlarmService extends Service {
     @Override
     public void onDestroy() {
         handler.removeCallbacksAndMessages(null);
-        if (player != null) player.stop();
+        if (player != null) {
+            if (session != null) DiagLog.log(this, DiagLog.AUDIO_STOPPED, session.scheduleId, "");
+            player.stop();
+        }
         stopVibration();
         releaseWakeLock();
         ActiveAlarm.clear(session);

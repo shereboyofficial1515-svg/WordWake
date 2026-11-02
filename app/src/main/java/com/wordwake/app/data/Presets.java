@@ -42,6 +42,7 @@ public final class Presets {
     public static Schedule motivation(AppSettings settings) {
         Schedule s = newSchedule(settings);
         s.title = MOTIVATION_TITLE;
+        s.categoryKey = com.wordwake.app.model.Category.KEY_MOTIVATION;
         s.body = MOTIVATION_BODY;
         s.startMinute = 6 * 60;
         s.endMinute = 6 * 60 + 30;

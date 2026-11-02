@@ -86,6 +86,14 @@ public final class AlarmPlayer {
         }
     }
 
+    public int positionMs() {
+        try {
+            return player == null ? 0 : player.getCurrentPosition();
+        } catch (IllegalStateException e) {
+            return 0;
+        }
+    }
+
     public boolean isPlaying() {
         try {
             return player != null && player.isPlaying();

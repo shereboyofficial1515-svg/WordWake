@@ -2,87 +2,53 @@ package com.wordwake.app.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.PopupMenu;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.fragment.app.Fragment;
 
-import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.wordwake.app.R;
-import com.wordwake.app.alarm.ActiveAlarm;
-import com.wordwake.app.alarm.AlarmController;
-import com.wordwake.app.alarm.AlarmScheduler;
 import com.wordwake.app.data.AppExecutors;
 import com.wordwake.app.data.AppSettings;
-import com.wordwake.app.data.ScheduleRepository;
+import com.wordwake.app.data.ContentRepository;
 import com.wordwake.app.data.WordWakeDatabase;
-import com.wordwake.app.engine.ScheduleEngine;
 import com.wordwake.app.model.Schedule;
-import com.wordwake.app.sound.SoundCatalog;
 
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.List;
+/** App shell: bottom navigation between Home, Reminders, Calendar, Create and Settings. */
+public class MainActivity extends AppCompatActivity {
 
-/** Home dashboard: clock, next alert, alarm health, and the list of scheduled messages. */
-public class MainActivity extends AppCompatActivity implements ScheduleAdapter.Callbacks, ActiveAlarm.Listener {
-
-    private AppSettings settings;
-    private ScheduleAdapter adapter;
-    private TextView nextTitle, nextDetail, statusTitle, statusDetail, ringingText;
-    private MaterialCardView statusCard, ringingCard;
-    private View emptyState;
-    private final android.os.Handler ticker = new android.os.Handler(android.os.Looper.getMainLooper());
-    private List<ScheduleAdapter.Row> rows = new ArrayList<>();
+    private BottomNavigationView nav;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        settings = new AppSettings(this);
         setContentView(R.layout.activity_main);
-        setSupportActionBar(findViewById(R.id.toolbar));
-
-        nextTitle = findViewById(R.id.next_title);
-        nextDetail = findViewById(R.id.next_detail);
-        statusCard = findViewById(R.id.status_card);
-        statusTitle = findViewById(R.id.status_title);
-        statusDetail = findViewById(R.id.status_detail);
-        ringingCard = findViewById(R.id.ringing_card);
-        ringingText = findViewById(R.id.ringing_text);
-        emptyState = findViewById(R.id.empty_state);
-
-        RecyclerView list = findViewById(R.id.schedule_list);
-        list.setLayoutManager(new LinearLayoutManager(this));
-        list.setNestedScrollingEnabled(false);
-        adapter = new ScheduleAdapter(this, this);
-        list.setAdapter(adapter);
-
-        findViewById(R.id.fab_new).setOnClickListener(v -> startActivity(new Intent(this, EditScheduleActivity.class)));
-        findViewById(R.id.empty_create).setOnClickListener(v -> startActivity(new Intent(this, EditScheduleActivity.class)));
-        findViewById(R.id.empty_example).setOnClickListener(v -> startActivity(
-                new Intent(this, EditScheduleActivity.class).putExtra(EditScheduleActivity.EXTRA_PRESET, true)));
-        statusCard.setOnClickListener(v -> startActivity(new Intent(this, PermissionsActivity.class)));
-        ringingCard.setOnClickListener(v -> openRinging());
-
-        if (!settings.onboardingDone()) {
-            startActivity(new Intent(this, PermissionsActivity.class).putExtra(PermissionsActivity.EXTRA_ONBOARDING, true));
+        nav = findViewById(R.id.bottom_nav);
+        nav.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.nav_create) {
+                showCreateSheet();
+                return false;
+            }
+            show(id);
+            return true;
+        });
+        if (savedInstanceState == null) {
+            nav.setSelectedItemId(R.id.nav_home);
+            AppSettings settings = new AppSettings(this);
+            if (!settings.onboardingDone()) {
+                startActivity(new Intent(this, PermissionsActivity.class).putExtra(PermissionsActivity.EXTRA_ONBOARDING, true));
+            }
+            final android.content.Context app = getApplicationContext();
+            AppExecutors.io(() -> new ContentRepository(app).seedQuotes(new AppSettings(app)));
         }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        ActiveAlarm.addListener(this);
-        onActiveAlarmChanged(ActiveAlarm.get());
-        refresh();
-        updateStatus();
         if (WordWakeDatabase.consumeWasReset()) {
             new MaterialAlertDialogBuilder(this)
                     .setTitle(R.string.db_reset_title)
@@ -90,212 +56,60 @@ public class MainActivity extends AppCompatActivity implements ScheduleAdapter.C
                     .setPositiveButton(android.R.string.ok, null)
                     .show();
         }
-        ticker.postDelayed(tick, 30_000);
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        ActiveAlarm.removeListener(this);
-        ticker.removeCallbacks(tick);
+    public void selectTab(int navId) {
+        nav.setSelectedItemId(navId);
     }
 
-    private final Runnable tick = new Runnable() {
-        @Override
-        public void run() {
-            updateNext();
-            ticker.postDelayed(this, 30_000);
+    private void show(int navId) {
+        String tag = "tab" + navId;
+        Fragment f = getSupportFragmentManager().findFragmentByTag(tag);
+        if (f == null) {
+            if (navId == R.id.nav_reminders) f = new RemindersFragment();
+            else if (navId == R.id.nav_calendar) f = new CalendarFragment();
+            else if (navId == R.id.nav_settings) f = new SettingsFragment();
+            else f = new HomeFragment();
         }
-    };
-
-    private void refresh() {
-        AppExecutors.io(() -> {
-            // Reconcile first so "next alert" reflects reality (also repairs alarms after force-stop).
-            AlarmScheduler.reconcileAll(getApplicationContext(), "dashboard");
-            List<Schedule> all = new ScheduleRepository(getApplicationContext()).getAll();
-            List<ScheduleAdapter.Row> out = new ArrayList<>();
-            for (Schedule s : all) {
-                boolean missing = !SoundCatalog.isAvailable(getApplicationContext(), s.soundUri);
-                out.add(new ScheduleAdapter.Row(s, missing));
-            }
-            return out;
-        }, result -> {
-            if (isFinishing() || isDestroyed()) return;
-            rows = result;
-            adapter.submit(result);
-            emptyState.setVisibility(result.isEmpty() ? View.VISIBLE : View.GONE);
-            updateNext();
-        });
+        getSupportFragmentManager().beginTransaction().replace(R.id.content, f, tag).commit();
     }
 
-    private void updateNext() {
-        Schedule next = null;
-        for (ScheduleAdapter.Row r : rows) {
-            if (r.schedule.enabled && r.schedule.nextTriggerAt > 0
-                    && (next == null || r.schedule.nextTriggerAt < next.nextTriggerAt)) {
-                next = r.schedule;
-            }
+    private void showCreateSheet() {
+        BottomSheetDialog sheet = new BottomSheetDialog(this);
+        android.widget.LinearLayout list = Ui.vertical(this);
+        int pad = Ui.dp(this, 8);
+        list.setPadding(pad, pad * 2, pad, pad * 3);
+        android.widget.TextView heading = Ui.text(this, getString(R.string.create_heading),
+                com.google.android.material.R.style.TextAppearance_Material3_TitleLarge);
+        heading.setPadding(pad * 2, 0, pad * 2, pad);
+        list.addView(heading);
+        for (int[] t : QuickCreate.OPTIONS) {
+            list.addView(Ui.iconRow(this, t[1], getString(t[2]), getString(t[3]), v -> {
+                sheet.dismiss();
+                QuickCreate.start(this, t[0]);
+            }));
         }
-        if (next == null) {
-            nextTitle.setText(R.string.next_none);
-            nextDetail.setText(rows.isEmpty() ? R.string.next_none_hint_empty : R.string.next_none_hint);
-            return;
+        sheet.setContentView(list);
+        sheet.show();
+    }
+
+    /** The reminder types offered when creating. */
+    static final class QuickCreate {
+        static final int[][] OPTIONS = {
+                {Schedule.TYPE_REMINDER, R.drawable.ic_event, R.string.type_reminder, R.string.type_reminder_hint},
+                {Schedule.TYPE_ALARM, R.drawable.ic_alarm, R.string.type_alarm, R.string.type_alarm_hint},
+                {Schedule.TYPE_TASK, R.drawable.ic_check, R.string.type_task, R.string.type_task_hint},
+                {Schedule.TYPE_APPOINTMENT, R.drawable.ic_person, R.string.type_appointment, R.string.type_appointment_hint},
+                {Schedule.TYPE_DEADLINE, R.drawable.ic_description, R.string.type_deadline, R.string.type_deadline_hint},
+                {Schedule.TYPE_TAX, R.drawable.ic_bank, R.string.type_tax, R.string.type_tax_hint},
+                {Schedule.TYPE_BILL, R.drawable.ic_receipt, R.string.type_bill, R.string.type_bill_hint},
+                {Schedule.TYPE_QUOTE, R.drawable.ic_star, R.string.type_quote, R.string.type_quote_hint},
+        };
+
+        private QuickCreate() {}
+
+        static void start(android.content.Context c, int type) {
+            c.startActivity(new Intent(c, EditScheduleActivity.class).putExtra(EditScheduleActivity.EXTRA_TYPE, type));
         }
-        nextTitle.setText(getString(R.string.next_title_format, next.displayTitle()));
-        long in = Math.max(0, next.nextTriggerAt - System.currentTimeMillis());
-        String detail = getString(R.string.next_detail_format, Formats.dateTime(this, next.nextTriggerAt),
-                Formats.duration(this, (int) Math.max(1, (in + 59_999) / 60_000)));
-        if (!next.nextExact) detail += "\n" + getString(R.string.next_inexact_warning);
-        nextDetail.setText(detail);
-    }
-
-    private void updateStatus() {
-        int issues = PermissionStatus.criticalIssues(this);
-        if (issues == 0) {
-            statusTitle.setText(R.string.status_ok_title);
-            statusDetail.setText(R.string.status_ok_detail);
-            statusCard.setCardBackgroundColor(getColor(R.color.ok_container));
-        } else {
-            statusTitle.setText(getResources().getQuantityString(R.plurals.status_issues_title, issues, issues));
-            statusDetail.setText(R.string.status_issues_detail);
-            statusCard.setCardBackgroundColor(getColor(R.color.warn_container));
-        }
-    }
-
-    @Override
-    public void onActiveAlarmChanged(ActiveAlarm.Session current) {
-        if (current == null) {
-            ringingCard.setVisibility(View.GONE);
-        } else {
-            ringingCard.setVisibility(View.VISIBLE);
-            ringingText.setText(current.test ? R.string.ringing_now_test : R.string.ringing_now);
-        }
-        refresh();
-    }
-
-    private void openRinging() {
-        ActiveAlarm.Session s = ActiveAlarm.get();
-        if (s == null) return;
-        startActivity(new Intent(this, AlarmActivity.class)
-                .putExtra(AlarmActivity.EXTRA_SCHEDULE_ID, s.scheduleId)
-                .putExtra(AlarmActivity.EXTRA_OCC_START, s.occStart)
-                .putExtra(AlarmActivity.EXTRA_OCC_END, s.occEnd)
-                .putExtra(AlarmActivity.EXTRA_TEST, s.test));
-    }
-
-    // ---- list callbacks ----
-
-    @Override
-    public void onOpen(Schedule s) {
-        startActivity(new Intent(this, EditScheduleActivity.class).putExtra(EditScheduleActivity.EXTRA_ID, s.id));
-    }
-
-    @Override
-    public void onToggle(Schedule s, boolean enabled) {
-        final android.content.Context app = getApplicationContext();
-        AppExecutors.io(() -> {
-            ScheduleRepository repo = new ScheduleRepository(app);
-            Schedule cur = repo.get(s.id);
-            if (cur == null) return 0;
-            if (enabled) {
-                if (cur.repeatMode == Schedule.REPEAT_ONCE
-                        && ScheduleEngine.validate(cur, System.currentTimeMillis(), ZoneId.systemDefault())
-                        .contains(ScheduleEngine.ERR_IN_PAST)) {
-                    return R.string.toggle_once_in_past;
-                }
-                cur.enabled = true;
-                cur.resetRuntimeState();
-                EditScheduleActivity.skipInProgressOccurrence(cur);
-                repo.save(cur);
-                AlarmScheduler.reschedule(app, cur);
-            } else {
-                AlarmController.onDisabledOrDeleted(app, cur.id);
-                cur.enabled = false;
-                cur.nextTriggerAt = 0;
-                repo.save(cur);
-            }
-            return 0;
-        }, msg -> {
-            if (msg != 0) Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
-            refresh();
-        });
-    }
-
-    @Override
-    public void onMenu(Schedule s, View anchor) {
-        PopupMenu menu = new PopupMenu(this, anchor);
-        menu.getMenuInflater().inflate(R.menu.schedule_item, menu.getMenu());
-        menu.setOnMenuItemClickListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.action_edit) {
-                onOpen(s);
-            } else if (id == R.id.action_duplicate) {
-                duplicate(s);
-            } else if (id == R.id.action_test) {
-                AppExecutors.io(() -> AlarmController.test(getApplicationContext(), s.id));
-                Toast.makeText(this, R.string.test_started, Toast.LENGTH_SHORT).show();
-            } else if (id == R.id.action_delete) {
-                confirmDelete(s);
-            }
-            return true;
-        });
-        menu.show();
-    }
-
-    private void duplicate(Schedule s) {
-        AppExecutors.io(() -> {
-            Schedule copy = s.copy();
-            copy.id = 0;
-            copy.createdAt = 0;
-            copy.title = getString(R.string.copy_title_format, s.displayTitle());
-            copy.resetRuntimeState();
-            // Duplicates start disabled so the user never gets two identical alarms by surprise.
-            copy.enabled = false;
-            new ScheduleRepository(getApplicationContext()).save(copy);
-            return copy.id;
-        }, id -> {
-            Toast.makeText(this, R.string.duplicated, Toast.LENGTH_LONG).show();
-            refresh();
-        });
-    }
-
-    private void confirmDelete(Schedule s) {
-        new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.delete_title)
-                .setMessage(getString(R.string.delete_message, s.displayTitle()))
-                .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton(R.string.delete, (d, w) -> {
-                    final android.content.Context app = getApplicationContext();
-                    AppExecutors.io(() -> {
-                        AlarmController.onDisabledOrDeleted(app, s.id);
-                        new ScheduleRepository(app).delete(s.id);
-                        return true;
-                    }, ok -> refresh());
-                })
-                .show();
-    }
-
-    // ---- toolbar ----
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.action_sounds) {
-            startActivity(new Intent(this, SoundLibraryActivity.class));
-            return true;
-        } else if (id == R.id.action_permissions) {
-            startActivity(new Intent(this, PermissionsActivity.class));
-            return true;
-        } else if (id == R.id.action_settings) {
-            startActivity(new Intent(this, SettingsActivity.class));
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 }

@@ -12,6 +12,7 @@ public class AlarmActionReceiver extends BroadcastReceiver {
     public static final String ACTION_STOP = "com.wordwake.app.action.STOP";
     public static final String ACTION_SNOOZE = "com.wordwake.app.action.SNOOZE";
     public static final String ACTION_DISMISS = "com.wordwake.app.action.DISMISS";
+    public static final String ACTION_COMPLETE = "com.wordwake.app.action.COMPLETE";
     public static final String EXTRA_SCHEDULE_ID = "schedule_id";
 
     @Override
@@ -32,6 +33,9 @@ public class AlarmActionReceiver extends BroadcastReceiver {
                         break;
                     case ACTION_DISMISS:
                         AlarmController.dismiss(app, id);
+                        break;
+                    case ACTION_COMPLETE:
+                        AlarmController.complete(app, id);
                         break;
                     default:
                         break;
